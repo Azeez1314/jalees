@@ -1,0 +1,20 @@
+{
+  "name": "jalees-phase0-eval",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Phase 0: lesson-constraint leakage eval for the Jalees Arabic conversation buddy. Run before any app code is written.",
+  "scripts": {
+    "eval": "tsx src/runEval.ts",
+    "eval:lesson": "tsx src/runEval.ts --lesson"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "openai": "^4.104.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}
