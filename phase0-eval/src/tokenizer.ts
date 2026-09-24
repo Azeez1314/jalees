@@ -9,8 +9,10 @@ const ARABIC_WORD = /[ء-غـ-ٰٟۖ-ۭ]+/g;
 /** Prefixes attachable to a noun/verb that don't change lesson-scope (conjunctions, definite article, some prepositions). Stripped greedily, longest first, before whitelist lookup. */
 const STRIPPABLE_PREFIXES = ["وال", "فال", "بال", "كال", "لل", "ال", "و", "ف", "ب", "ك", "ل"];
 
-/** Attached pronoun suffixes taught by Lesson 5; stripped before whitelist lookup so e.g. كِتَابُهَا matches كِتَابٌ's root. */
-const STRIPPABLE_SUFFIXES = ["كما", "هما", "كم", "هن", "هم", "نا", "ي", "ك", "ه", "ها"];
+/** Attached pronoun suffixes taught by Lesson 5, plus the dual nominative marker ـان (allowed
+ * as of Lesson 5's dual-number grammar) — stripped before whitelist lookup so e.g. كِتَابُهَا
+ * and كِتَابَانِ both match كِتَابٌ's root. */
+const STRIPPABLE_SUFFIXES = ["كما", "هما", "كم", "هن", "هم", "نا", "ي", "ك", "ه", "ها", "ان"];
 
 function candidateForms(token: string): string[] {
   const forms = new Set<string>([token]);

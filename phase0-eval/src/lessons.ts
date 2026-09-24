@@ -18,7 +18,7 @@ export const lessons: Lesson[] = [
     newVocab: [
       "هَذَا", "هَذِهِ", "مَا", "بَيْتٌ", "كِتَابٌ", "قَلَمٌ", "بَابٌ",
       "مَسْجِدٌ", "مِفْتَاحٌ", "كُرْسِيٌّ", "سَرِيرٌ", "قَمِيصٌ", "وَلَدٌ",
-      "بِنْتٌ", "رَجُلٌ", "اِمْرَأَةٌ", "يَا", "نَعَمْ", "لَا",
+      "بِنْتٌ", "رَجُلٌ", "اِمْرَأَةٌ", "صَدِيقٌ", "يَا", "نَعَمْ", "لَا",
     ],
     newGrammar: [
       "Nominal sentence: demonstrative (هذا/هذه) as مبتدأ + indefinite noun as خبر",
@@ -32,8 +32,9 @@ export const lessons: Lesson[] = [
     lessonNo: 2,
     title: "The definite article and far demonstratives",
     newVocab: [
-      "الْبَيْتُ", "الْكِتَابُ", "ذَلِكَ", "تِلْكَ", "كَبِيرٌ", "صَغِيرٌ",
-      "جَمِيلٌ", "جَدِيدٌ", "قَدِيمٌ", "أَيْنَ", "سَيَّارَةٌ",
+      "الْبَيْتُ", "الْكِتَابُ", "ذَلِكَ", "ذَاكَ", "تِلْكَ", "كَبِيرٌ", "صَغِيرٌ",
+      "جَمِيلٌ", "جَدِيدٌ", "قَدِيمٌ", "أَيْنَ", "سَيَّارَةٌ", "كَثِيرٌ",
+      "هُنَا", "هُنَاكَ", "أَيْضًا", "لَكِنْ",
     ],
     newGrammar: [
       "Definite article ال prefixed to nouns",
@@ -60,8 +61,8 @@ export const lessons: Lesson[] = [
     lessonNo: 4,
     title: "Prepositions of place",
     newVocab: [
-      "فِي", "عَلَى", "مِنْ", "إِلَى", "تَحْتَ", "فَوْقَ", "أَمَامَ",
-      "خَلْفَ", "الْمَدْرَسَةُ", "السُّوقُ",
+      "فِي", "عَلَى", "مِنْ", "إِلَى", "مَعَ", "تَحْتَ", "فَوْقَ", "أَمَامَ",
+      "خَلْفَ", "الْمَدْرَسَةُ", "السُّوقُ", "طَاوِلَةٌ", "مَكْتَبٌ",
     ],
     newGrammar: [
       "Prepositional phrase جار ومجرور as خبر (e.g. الكتاب في البيت)",
@@ -74,12 +75,15 @@ export const lessons: Lesson[] = [
     title: "Attached possessive pronouns and numbers 1-3",
     newVocab: [
       "كِتَابِي", "كِتَابُكَ", "كِتَابُكِ", "كِتَابُهُ", "كِتَابُهَا",
-      "وَاحِدٌ", "اِثْنَانِ", "ثَلَاثَةٌ", "أَقْلَامٌ", "بُيُوتٌ",
+      "وَاحِدٌ", "اِثْنَانِ", "ثَلَاثَةٌ", "أَقْلَامٌ", "بُيُوتٌ", "كُتُبٌ",
+      "عِنْدِي", "عِنْدَكَ", "عِنْدَكِ", "عِنْدَهُ", "عِنْدَهَا",
     ],
     newGrammar: [
       "Attached possessive pronoun suffixes ـي/ـكَ/ـكِ/ـهُ/ـهَا on nouns",
       "Sound/broken plural nouns introduced as vocabulary items (not full plural paradigm yet)",
       "Cardinal numbers 1-3 with a counted noun",
+      "Possession construction عند + attached pronoun (عندي/عندك/عنده/عندها) meaning 'I have/you have/he has/she has'",
+      "Dual noun and adjective forms (المثنى) when counting exactly two, e.g. كِتَابَانِ, تِلْكَ جَمِيلَتَانِ",
     ],
   },
 ];
