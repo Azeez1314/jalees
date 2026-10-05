@@ -60,3 +60,10 @@ body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* Arabic inside an English sentence (tips, recaps): right font, a touch larger, no RTL block behaviour. */
+.arabic-inline {
+  font-family: var(--font-arabic), "Noto Naskh Arabic", serif;
+  font-size: 1.2em;
+  line-height: 1;
+}

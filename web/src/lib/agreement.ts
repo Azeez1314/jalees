@@ -189,10 +189,14 @@ export function changesDemonstrative(original: string, corrected: string): boole
   return demonstratives(original).join(" ") !== demonstratives(corrected).join(" ");
 }
 
+/** The words of a sentence, normalized (no diacritics, alef/hamza spelling unified, leading ال dropped), joined by spaces. */
+export function wordsKey(text: string): string {
+  return tokenize(text).map((t) => bare(t.raw)).join(" ");
+}
+
 /** Same words ignoring diacritics, alef/hamza spelling, and a leading ال. */
 export function sameWords(a: string, b: string): boolean {
-  const words = (s: string) => tokenize(s).map((t) => bare(t.raw)).join(" ");
-  return words(a) === words(b);
+  return wordsKey(a) === wordsKey(b);
 }
 
 /** True if the reply contains both the corrected demonstrative and the noun — i.e. it actually models the fix. */

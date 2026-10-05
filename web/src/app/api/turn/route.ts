@@ -1,6 +1,9 @@
 import { scenarios } from "@/content/scenarios";
 import { getUser } from "@/lib/auth/server";
-import { getRecentMistakes, getSession, getTurns, saveExchange, type VoiceInput } from "@/lib/queries";
+import { pickFactsForSession } from "@/lib/memory";
+import { getPromptMistakes } from "@/lib/mistake-bank";
+import { getSession, getTurns, saveExchange, type VoiceInput } from "@/lib/queries";
+import { BUDDY_SPEAKS_MEMORY, FACTS_PER_SESSION } from "@/lib/facts";
 import { generateBuddyTurn } from "@/lib/turn";
 
 const MAX_LEARNER_CHARS = 300;
@@ -49,7 +52,8 @@ export async function POST(request: Request) {
         text: t.role === "buddy" ? t.textDiacritized : (t.transcriptRaw ?? t.textDisplay),
       })),
       learnerText: text,
-      recentMistakes: await getRecentMistakes(user.id),
+      recentMistakes: await getPromptMistakes(user.id),
+      memoryFacts: BUDDY_SPEAKS_MEMORY ? await pickFactsForSession(user.id, session.id, FACTS_PER_SESSION) : [],
     });
     const buddyTurnId = await saveExchange(user.id, session.id, text, voice, buddy);
 

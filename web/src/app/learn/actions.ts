@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { scenarios } from "@/content/scenarios";
 import { stripTashkeel } from "@/lib/arabic";
 import { getUser } from "@/lib/auth/server";
+import { addFact, deleteAllFacts, deleteFact } from "@/lib/memory";
 import { createSession, getOrCreateProfile, updateProfile, type TashkeelPref } from "@/lib/queries";
 
 async function requireUser() {
@@ -40,4 +41,32 @@ export async function setTashkeelPref(pref: TashkeelPref) {
   if (pref !== "full" && pref !== "none") return;
   await getOrCreateProfile(user.id, user.name ?? null);
   await updateProfile(user.id, { tashkeelPref: pref });
+}
+
+export interface NoteState {
+  error?: string;
+  saved?: boolean;
+}
+
+/** "What I remember about you": a note the learner writes themselves (English is fine). */
+export async function addNote(_prev: NoteState | null, formData: FormData): Promise<NoteState> {
+  const user = await requireUser();
+  const result = await addFact(user.id, String(formData.get("note") ?? ""), "learner");
+  if (!result.ok) return { error: result.error };
+  revalidatePath("/learn/memory");
+  return { saved: true };
+}
+
+export async function forgetFact(formData: FormData) {
+  const user = await requireUser();
+  await deleteFact(user.id, String(formData.get("factId") ?? ""));
+  revalidatePath("/learn/memory");
+  revalidatePath("/learn", "layout");
+}
+
+export async function forgetAllFacts() {
+  const user = await requireUser();
+  await deleteAllFacts(user.id);
+  revalidatePath("/learn/memory");
+  revalidatePath("/learn", "layout");
 }

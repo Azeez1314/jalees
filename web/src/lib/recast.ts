@@ -29,6 +29,10 @@ export function isSafeRecast(original: string, corrected: string, lessonNo: numb
   const nouns = new Set([...g.masculine, ...g.feminine].flatMap((w) => tokens(w)));
   const origSet = new Set(orig);
 
+  // Dropping words is not a correction: a learner who uses a word above their lesson (e.g. a verb) hasn't made a mistake,
+  // and "fixing" it by deletion teaches nothing. (A reorder keeps the same number of words, so word-order fixes still pass.)
+  if (corr.length < orig.length && corr.every((c) => origSet.has(c))) return false;
+
   for (const c of corr) {
     if (origSet.has(c) || FUNCTION_WORDS.has(c)) continue;
     // Feminine ة (normalized to ه) added to / removed from an adjective the learner already wrote.

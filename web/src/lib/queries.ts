@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
-import type { PastMistake } from "@/lib/prompt";
+import type { Recap } from "@/lib/recap";
+import { isBankable, mistakeKey } from "@/lib/review";
 import type { Recast } from "@/lib/turn";
 
 export type TashkeelPref = "full" | "none";
@@ -144,10 +145,16 @@ export async function saveExchange(
          ${buddy.recast ? JSON.stringify(buddy.recast) : null}::jsonb,
          ${buddy.promptRepeat}, ${JSON.stringify(buddy.vocabFlags)}::jsonb, ${buddy.retried}, ${buddy.recastRejected})
        RETURNING id`,
-    ...(buddy.recast
+    // Only real, checkable errors enter the review bank (not "other", not deletions). Repeating a mistake bumps times_seen
+    // and restarts its ladder instead of creating a duplicate.
+    ...(buddy.recast && isBankable(buddy.recast)
       ? [
-          tx`INSERT INTO mistakes (user_id, session_id, error_type, original, corrected)
-             VALUES (${userId}, ${sessionId}, ${buddy.recast.errorType}, ${buddy.recast.original}, ${buddy.recast.corrected})`,
+          tx`INSERT INTO mistakes (user_id, session_id, error_type, original, corrected, key)
+             VALUES (${userId}, ${sessionId}, ${buddy.recast.errorType}, ${buddy.recast.original}, ${buddy.recast.corrected},
+                     ${mistakeKey(buddy.recast.corrected)})
+             ON CONFLICT (user_id, key) WHERE key IS NOT NULL DO UPDATE SET
+               times_seen = mistakes.times_seen + 1, last_seen_at = now(), session_id = EXCLUDED.session_id,
+               original = EXCLUDED.original, review_count = 0, review_due_at = now() + interval '1 day'`,
         ]
       : []),
   ]);
@@ -163,27 +170,59 @@ export async function getOwnBuddyTurnText(userId: string, turnId: string): Promi
   return rows.length ? (rows[0].text_diacritized as string) : null;
 }
 
-export async function getRecentMistakes(userId: string, limit = 5): Promise<PastMistake[]> {
-  const rows = await sql()`
-    SELECT original, corrected, error_type FROM mistakes
-    WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT ${limit}`;
-  // Learner-authored text goes into a prompt: cap its length.
-  return rows.map((r) => ({
-    original: String(r.original).slice(0, 120),
-    corrected: String(r.corrected).slice(0, 120),
-    errorType: r.error_type,
-  }));
-}
-
 export async function listRecentSessions(userId: string, limit = 5) {
   const rows = await sql()`
     SELECT s.id, s.scenario_id, s.started_at,
-           (SELECT count(*) FROM turns t WHERE t.session_id = s.id AND t.role = 'learner')::int AS learner_turns
+           (SELECT count(*) FROM turns t WHERE t.session_id = s.id AND t.role = 'learner')::int AS learner_turns,
+           (s.recap IS NOT NULL) AS has_recap
     FROM sessions s WHERE s.user_id = ${userId} ORDER BY s.started_at DESC LIMIT ${limit}`;
   return rows.map((r) => ({
     id: r.id as string,
     scenarioId: r.scenario_id as string,
     startedAt: r.started_at as string,
     learnerTurns: r.learner_turns as number,
+    hasRecap: r.has_recap as boolean,
   }));
+}
+
+/** Distinct UTC days (YYYY-MM-DD, newest first) on which this learner sent at least one message. Feeds computeStreak. */
+export async function getPracticeDays(userId: string): Promise<string[]> {
+  const rows = await sql()`
+    SELECT DISTINCT ((t.created_at AT TIME ZONE 'utc')::date)::text AS day
+    FROM turns t JOIN sessions s ON s.id = t.session_id
+    WHERE s.user_id = ${userId} AND t.role = 'learner'
+    ORDER BY day DESC LIMIT 400`;
+  return rows.map((r) => r.day as string);
+}
+
+/** The saved recap for one of this user's sessions, or null if it hasn't been generated yet. */
+export async function getRecap(userId: string, sessionId: string): Promise<Recap | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(sessionId)) return null;
+  const rows = await sql()`SELECT recap FROM sessions WHERE id = ${sessionId} AND user_id = ${userId}`;
+  return rows.length ? ((rows[0].recap as Recap | null) ?? null) : null;
+}
+
+/**
+ * Saves the recap and marks the session ended — but only if none is saved yet. Returns false if another request got there
+ * first (callers then return the saved one), which keeps recap generation idempotent under double-clicks.
+ */
+export async function saveRecap(userId: string, sessionId: string, recap: Recap): Promise<boolean> {
+  const rows = await sql()`
+    UPDATE sessions SET recap = ${JSON.stringify(recap)}::jsonb, ended_at = COALESCE(ended_at, now())
+    WHERE id = ${sessionId} AND user_id = ${userId} AND recap IS NULL RETURNING id`;
+  return rows.length > 0;
+}
+
+export async function countVoiceTurns(sessionId: string): Promise<number> {
+  const rows = await sql()`
+    SELECT count(*)::int AS n FROM turns WHERE session_id = ${sessionId} AND role = 'learner' AND input_mode = 'voice'`;
+  return rows[0].n as number;
+}
+
+/** The most recent recap's "next step" (shown as a one-line welcome-back on /learn). */
+export async function getLatestNextStep(userId: string): Promise<string | null> {
+  const rows = await sql()`
+    SELECT recap->>'nextStep' AS next FROM sessions
+    WHERE user_id = ${userId} AND recap IS NOT NULL ORDER BY started_at DESC LIMIT 1`;
+  return rows.length ? ((rows[0].next as string | null) ?? null) : null;
 }

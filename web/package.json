@@ -16,7 +16,10 @@
     "spike:voice": "tsx scripts/spike-voice.ts",
     "check:usage": "tsx scripts/check-usage.ts",
     "check:voice": "tsx scripts/check-voice.ts",
-    "audio:openers": "tsx scripts/generate-opener-audio.ts"
+    "audio:openers": "tsx scripts/generate-opener-audio.ts",
+    "check:retention": "tsx scripts/check-retention.ts",
+    "try:recap": "tsx scripts/try-recap.ts",
+    "check:recap": "tsx scripts/check-recap-flow.ts"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.5.0-beta",

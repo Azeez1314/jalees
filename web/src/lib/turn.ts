@@ -1,4 +1,5 @@
-import OpenAI from "openai";
+import type OpenAI from "openai";
+import { LLM_MODEL, llm } from "@/lib/ai/llm";
 import { cumulativeVocab, normalizeArabic } from "@/content/lessons";
 import type { Scenario } from "@/content/scenarios";
 import {
@@ -14,8 +15,6 @@ import { ERROR_TYPES, buildBuddySystemPrompt, type ErrorType, type PastMistake }
 import { isSafeRecast } from "@/lib/recast";
 import { checkVocab } from "@/lib/vocab";
 
-/** Swap vendors here only — see docs/architecture.md ("every external AI service sits behind a thin interface"). */
-const MODEL = "gpt-4o-mini";
 
 export interface HistoryTurn {
   role: "learner" | "buddy";
@@ -48,11 +47,6 @@ interface Draft {
   reply: string;
 }
 
-let client: OpenAI | null = null;
-function openai(): OpenAI {
-  return (client ??= new OpenAI());
-}
-
 function parseJson(text: string): Record<string, unknown> {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   return JSON.parse((fenced ? fenced[1] : text).trim());
@@ -71,8 +65,8 @@ function normalizeRecast(raw: unknown): Recast | null {
 async function draft(messages: OpenAI.Chat.ChatCompletionMessageParam[]): Promise<Draft> {
   let lastError = "";
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await openai().chat.completions.create({
-      model: MODEL,
+    const res = await llm().chat.completions.create({
+      model: LLM_MODEL,
       max_completion_tokens: 600,
       response_format: { type: "json_object" },
       messages,
@@ -96,8 +90,10 @@ export async function generateBuddyTurn(input: {
   history: HistoryTurn[];
   learnerText: string;
   recentMistakes: PastMistake[];
+  /** Things the buddy knows about this learner (see lib/memory.ts). */
+  memoryFacts?: string[];
 }): Promise<BuddyTurnResult> {
-  const { scenario, history, learnerText, recentMistakes } = input;
+  const { scenario, history, learnerText, recentMistakes, memoryFacts = [] } = input;
   const allowed = cumulativeVocab(scenario.lessonNo);
 
   // The commonest beginner error (demonstrative–noun gender) is decided by the app from the gender table, not by the
@@ -105,7 +101,7 @@ export async function generateBuddyTurn(input: {
   const detected = detectAgreementError(learnerText, scenario.lessonNo);
 
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-    { role: "system", content: buildBuddySystemPrompt(scenario.lessonNo, scenario.goal, recentMistakes) },
+    { role: "system", content: buildBuddySystemPrompt(scenario.lessonNo, scenario.goal, recentMistakes, memoryFacts) },
     ...history.map(
       (t): OpenAI.Chat.ChatCompletionMessageParam => ({
         role: t.role === "buddy" ? "assistant" : "user",
@@ -138,7 +134,7 @@ export async function generateBuddyTurn(input: {
     }
     const quotesLearner = normalizeArabic(learnerText).includes(normalizeArabic(r.original));
     if (quotesLearner && isSafeRecast(r.original, r.corrected, scenario.lessonNo)) return null;
-    return "your correction was rejected — it must quote the learner's words exactly and fix only the agreement or a particle (e.g. swap هذه/هذا). Never change the learner's noun to a different word. If you are not certain there is an error, set recast to null";
+    return "your correction was rejected — it must quote the learner's words exactly and fix only the agreement or a particle (e.g. swap هذه/هذا). Never change the learner's noun to a different word, and never delete words (using vocabulary beyond the lesson is not an error). If you are not certain there is an error, set recast to null";
   };
 
   // Scores a draft against the guard rails. Lower is better; 0 means nothing to fix.

@@ -1,9 +1,13 @@
 import { lessons } from "@/content/lessons";
 import { scenarios } from "@/content/scenarios";
 import { getUser } from "@/lib/auth/server";
-import { getOrCreateProfile, listRecentSessions } from "@/lib/queries";
+import { listFacts } from "@/lib/memory";
+import { countDueMistakes } from "@/lib/mistake-bank";
+import { getLatestNextStep, getOrCreateProfile, getPracticeDays, listRecentSessions } from "@/lib/queries";
+import { computeStreak } from "@/lib/streak";
 import { startSession, updateLevel } from "./actions";
 import { SignOutButton } from "./SignOutButton";
+import { StatCards } from "./StatCards";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -14,7 +18,14 @@ export default async function LearnPage() {
   if (!user) redirect("/auth/sign-in");
 
   const profile = await getOrCreateProfile(user.id, user.name ?? null);
-  const recent = await listRecentSessions(user.id);
+  const [recent, dueCount, facts, practiceDays, nextStep] = await Promise.all([
+    listRecentSessions(user.id),
+    countDueMistakes(user.id),
+    listFacts(user.id),
+    getPracticeDays(user.id),
+    getLatestNextStep(user.id),
+  ]);
+  const streak = computeStreak(practiceDays);
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
@@ -25,6 +36,14 @@ export default async function LearnPage() {
         </div>
         <SignOutButton />
       </header>
+
+      {nextStep && (
+        <p className="mb-4 rounded-xl bg-accent-soft px-4 py-3 text-accent">
+          <span className="font-medium">Last time:</span> {nextStep}
+        </p>
+      )}
+
+      <StatCards streak={streak} dueCount={dueCount} factCount={facts.length} />
 
       <form action={updateLevel} className="mb-8 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-card p-4">
         <label htmlFor="lesson" className="font-medium">
@@ -52,17 +71,25 @@ export default async function LearnPage() {
             {recent.map((s) => {
               const sc = scenarios.find((x) => x.id === s.scenarioId);
               return (
-                <li key={s.id}>
+                <li key={s.id} className="flex items-stretch gap-2">
                   <Link
                     href={`/learn/session/${s.id}`}
-                    className="flex items-center justify-between rounded-lg border border-line bg-card px-4 py-3 hover:bg-accent-soft"
+                    className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg border border-line bg-card px-4 py-3 hover:bg-accent-soft"
                   >
-                    <span>{sc?.title ?? s.scenarioId}</span>
-                    <span className="text-sm text-muted">
+                    <span className="truncate">{sc?.title ?? s.scenarioId}</span>
+                    <span className="shrink-0 text-sm text-muted">
                       {s.learnerTurns} {s.learnerTurns === 1 ? "reply" : "replies"} ·{" "}
                       {new Date(s.startedAt).toLocaleDateString()}
                     </span>
                   </Link>
+                  {(s.hasRecap || s.learnerTurns > 0) && (
+                    <Link
+                      href={`/learn/session/${s.id}/recap`}
+                      className="flex shrink-0 items-center rounded-lg border border-line bg-card px-3 text-sm hover:bg-accent-soft"
+                    >
+                      {s.hasRecap ? "Recap" : "Finish & recap"}
+                    </Link>
+                  )}
                 </li>
               );
             })}

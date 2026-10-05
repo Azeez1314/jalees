@@ -87,3 +87,30 @@ ALTER TABLE turns
   ADD COLUMN IF NOT EXISTS input_mode text NOT NULL DEFAULT 'text' CHECK (input_mode IN ('text', 'voice')),
   ADD COLUMN IF NOT EXISTS asr_text text,
   ADD COLUMN IF NOT EXISTS audio_seconds numeric;
+
+-- Phase 3 (retention) -----------------------------------------------------------------------------------------
+-- Mistake bank: one row per distinct corrected sentence per learner (key = normalized corrected words), so repeating a
+-- mistake bumps times_seen and resets its review ladder instead of piling up duplicates. Legacy rows have a NULL key and
+-- are ignored by review. review_count = correct reviews in a row (4 = mastered); review_due_at follows the 1/3/7/21-day ladder.
+ALTER TABLE mistakes
+  ADD COLUMN IF NOT EXISTS key text,
+  ADD COLUMN IF NOT EXISTS times_seen int NOT NULL DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS last_seen_at timestamptz NOT NULL DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS last_reviewed_at timestamptz;
+CREATE UNIQUE INDEX IF NOT EXISTS mistakes_user_key_idx ON mistakes (user_id, key) WHERE key IS NOT NULL;
+
+-- What the buddy remembers about a learner. Learners can see, add and delete every row (web/src/app/learn/memory).
+CREATE TABLE IF NOT EXISTS memory_facts (
+  id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id            text NOT NULL,
+  fact               text NOT NULL,
+  key                text NOT NULL,
+  source             text NOT NULL CHECK (source IN ('learner', 'conversation')),
+  source_session_id  uuid REFERENCES sessions(id) ON DELETE SET NULL,
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, key)
+);
+CREATE INDEX IF NOT EXISTS memory_facts_user_idx ON memory_facts (user_id, created_at DESC);
+
+-- Post-session recap (generated once, on demand) — see web/src/lib/recap.ts.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS recap jsonb;

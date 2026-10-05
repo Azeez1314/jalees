@@ -1,4 +1,4 @@
-# Jalees web app (Phases 1-2: text and voice conversation loop)
+# Jalees web app (Phases 1-3: text and voice conversation, recaps, mistake review)
 
 Next.js 16 (App Router) + Neon (Postgres and Neon Auth) + OpenAI. Learners sign in with an emailed one-time code, pick a
 Madinah Book 1 scenario, and chat in Arabic. The buddy only uses the vocabulary and grammar of the scenario's lesson,
@@ -36,6 +36,9 @@ restates mistakes correctly ("recast"), and shows replies fully diacritized with
 | `npm run check:agreement` | Unit checks for the demonstrative–noun gender detector (no network) |
 | `npm run check:usage` | Daily voice-cap arithmetic and the real `usage_daily` table (throwaway user, cleaned up) |
 | `npm run check:voice` | Real TTS → STT round trip, MIME mapping, and `/api/tts` turn-ownership rules (a fraction of a cent; macOS `afinfo`) |
+| `npm run check:retention` | Phase 3 logic (review ladder, mistake keys, streak, fact rules, tips, recap parsing) plus the real mistake-bank and memory tables with throwaway users |
+| `npm run check:recap` | The recap flow end to end against the real DB and model: stats, patterns, fact extraction, idempotency, two racing requests (a fraction of a cent) |
+| `npm run try:recap [runs]` | The recap narrative on three synthetic transcripts: lesson-only and role-play (must store no facts), and English asides (goal kept, a health detail must not be) |
 | `npm run audio:openers` | Renders scenario-opener audio to `public/audio/openers/` (idempotent; `-- --force` re-renders). `check:content` fails if it's stale |
 | `npm run spike:voice` | The Phase 2 provider spike: samples in `.spike-audio/` (gitignored) for listening, plus a round-trip accuracy table |
 | `npm run try:turn -- <scenarioId> "msg" …` | Runs a scripted conversation through the real turn pipeline — no DB or auth. Needs `OPENAI_API_KEY` |
@@ -87,6 +90,34 @@ stop; **typing keeps working**. Rough cost at the cap: about $0.10 per learner p
 
 **Requirements:** the browser only allows the microphone on `https://` or `localhost`, so a deployed site needs HTTPS.
 
+## Retention (Phase 3)
+
+The loop that brings a self-study learner back: finish a session → see what to work on → review it on a schedule.
+
+- **Recap** (`/learn/session/[id]/recap`, `lib/recap.ts`, `lib/recap-service.ts`): generated once when the learner taps *Finish & recap*
+  (idempotent — a refresh or double-click never re-spends). The **patterns** are deterministic: this session's corrections grouped by
+  error type, with the real wrong → right pairs and a hand-written tip from `content/tips.ts`. The model writes only the English
+  narrative and may quote Arabic only words that appear in the transcript or the lesson (anything else is replaced by a plain
+  fallback). Grammar explanations are never model-written.
+- **Mistake bank + spaced review** (`/learn/review`, `lib/review.ts`, `lib/mistake-bank.ts`): real, checkable corrections are banked once
+  per distinct corrected sentence (a repeat bumps `times_seen` and restarts the ladder). Review is **typed on purpose** (dictation would let
+  the recogniser silently fix the very error being practised), checked with the same word normalization as everywhere else, and moves
+  a mistake along 1 → 3 → 7 → 21 days; four correct in a row = mastered. Deletions ("you used a verb above your lesson") are not mistakes
+  and are never recast or banked.
+- **Memory** (`/learn/memory`, `lib/memory.ts`, `lib/facts.ts`): learners write short notes about themselves, and facts they volunteer in a
+  session are added at recap time. They can see, add and delete everything, or forget it all. Stored: short English phrases only.
+  Refused: emails, links, phone numbers or long numbers. The recap extractor is told to skip health, money, politics, sexuality,
+  contact details, addresses and anything about children, and to ignore sentences that merely practise vocabulary.
+  Capped at 40 per learner.
+- **Streak**: consecutive UTC days with at least one message, counting through yesterday so a morning visit isn't a zero; no guilt copy.
+
+**The buddy does not use memory in Arabic yet (`BUDDY_SPEAKS_MEMORY = false` in `lib/facts.ts`).** Measured with gpt-4o-mini on the
+Lesson 3 "Who are you?" scenario: replies containing words above the lesson rose from 5/38 (13%) to 15/38 (39%) when three facts were
+added — the model reaches for *sister*, *work*, *country* despite being told to use a fact only if it can say it with the allowed
+words. At Book 1 almost no personal fact is sayable in-lesson anyway. Facts currently personalize the English recap and the memory
+page. To re-enable, re-run that comparison (`npm run try:turn -- b1l3-who-are-you "…" --fact "…"`, ~5 parallel runs at a time — the
+200k tokens/min limit skews bigger batches).
+
 ## Content
 
 `src/content/` is the source of truth (`lessons.ts`, `scenarios.ts`, `genders.ts`); `db:seed` mirrors it into the
@@ -108,5 +139,10 @@ Phase 0 eval stops testing what ships.
   recovered 100% of the words from the synthesized audio, but that cannot prove correct short vowels or case endings — judge by
   ear, and swap `lib/ai/tts.ts` if needed. Real learner speech is harder for the recogniser than synthesized speech; expect errors
   and rely on the confirm step.
+- Recap and memory quality are `gpt-4o-mini`'s. The recap narrative is generic when the model's text is unusable (fallback), and fact
+  extraction is conservative by design (an empty list is the normal outcome for lesson-only sessions).
+- There are no reminders, push notifications or emails: the only nudge is the due count on `/learn`. Review is typed, not spoken.
+- Baseline leak rate: even without memory, ~13% of Lesson 3 "Who are you?" replies contained words above the lesson — mostly praise
+  words (جيد, ممتاز, مبروك) and place names. Adding common praise words to the allowed vocabulary would remove most of them.
 - Learner pronunciation is not scored (deferred to v2). The cap day is UTC. The voice cap is charged by recording length and
   estimated speech length, not by provider invoices. Text practice is limited only by 40 learner turns per session.

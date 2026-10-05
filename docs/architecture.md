@@ -104,7 +104,7 @@ Isolation: every user-owned table is keyed by `user_id` and every query filters 
 - **Phase 0 — Constraint eval (no app).** Script that runs the LLM against 20 test conversations per lesson and flags vocabulary/grammar leaks above lesson N. If this fails, the product concept needs rework — test it before building anything. → [`phase0-eval/`](../phase0-eval)
 - **Phase 1 — Text conversation loop.** Auth, lessons/scenarios tables (hand-author Book 2, lessons 1–5), `/api/turn` text-only, recast + display. Usable product for testing pedagogy with 5–10 real learners.
 - **Phase 2 — Voice.** MediaRecorder capture, STT/TTS behind interfaces, transcript confirmation UI, session cap.
-- **Phase 3 — Memory + recap + mistake review.** The retention layer.
+- **Phase 3 — Memory + recap + mistake review.** The retention layer. → built in `web/` (see its README, "Retention"). Recap patterns are deterministic with curated tips; buddy-side Arabic memory is OFF because measured leakage tripled (13% → 39%).
 - **Phase 4 — Placement + Stripe + polish.** Trial → subscription; landing page; creator-partnership launch.
 
 ## Top technical risks (watch continuously)

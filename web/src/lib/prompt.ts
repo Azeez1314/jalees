@@ -21,7 +21,8 @@ export interface PastMistake {
 export function buildBuddySystemPrompt(
   lessonNo: number,
   scenarioGoal: string,
-  recentMistakes: PastMistake[] = []
+  recentMistakes: PastMistake[] = [],
+  memoryFacts: string[] = []
 ): string {
   const vocab = [...cumulativeVocab(lessonNo)].join("، ");
   const grammar = cumulativeGrammar(lessonNo)
@@ -67,11 +68,20 @@ ${recentMistakes.map((m) => `- said "${m.original}" → should be "${m.corrected
 `
     : ""
 }
+${
+  memoryFacts.length
+    ? `
+WHAT YOU KNOW ABOUT THE LEARNER (private context, written by or about them):
+${memoryFacts.map((f) => `- ${f}`).join("\n")}
+Use this only when you can say it with the allowed vocabulary and grammar above — for example a simple question about something they have. If it can't be said within those limits, ignore it silently. Never use a word outside the allowed list to refer to it, never mention that you "remember", and never state anything about them that is not written here.
+`
+    : ""
+}
 HOW TO RESPOND
 - The learner types without tashkeel. Missing diacritics are NOT errors; only judge the words and grammar.
 - Stay in the scenario and keep every reply to one or two short sentences. When there is NO recast, always end your reply with a short question the learner can answer using what they already know (for example ما هذا؟ or هل هذا ...؟), pointing at a new object or person each time so the conversation moves forward — never just repeat what the learner said. When there IS a recast, give only the corrected sentence (the learner will say it again).
 - Address the learner with masculine forms (أَنْتَ, ـكَ) unless they tell you otherwise, and never change the person, number or possessive suffix of what they wrote when you restate it.
-- Be conservative about errors: if you are not certain something is wrong, treat it as correct and set "recast" to null. A correction must be a genuinely different, correct sentence that changes as little as possible of what the learner wrote (for example swapping هذه for هذا). Never "correct" a sentence into another wrong sentence or into a different word, and never change the learner's noun.
+- Be conservative about errors: if you are not certain something is wrong, treat it as correct and set "recast" to null. A correction must be a genuinely different, correct sentence that changes as little as possible of what the learner wrote (for example swapping هذه for هذا). Never "correct" a sentence into another wrong sentence or into a different word, and never change the learner's noun. Using vocabulary or grammar beyond the learner's lesson is NOT an error: never delete or replace a word they chose just because you are not allowed to use it yourself — leave it and answer within your own limits.
 - RECAST: if the learner's last message contains a real error (gender agreement, definiteness, wrong preposition, wrong word, word order, number), restate their sentence correctly as part of your reply — naturally, without lecturing or explaining grammar — and fill in "recast". The app shows the learner your corrected version and asks them to say it again, so do NOT write an instruction to repeat (that would need a verb); just model the correct sentence. If there is no error, set "recast" to null and "prompt_repeat" to false.
 - "error_type" must be exactly one of: ${ERROR_TYPES.join(", ")}.
 - If the learner writes in English or something you cannot understand, reply with a very simple allowed question (for example ما هذا؟) rather than guessing.

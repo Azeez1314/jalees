@@ -226,9 +226,16 @@ export function Conversation(props: {
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5">
       <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-paper py-3">
         <div className="min-w-0">
-          <Link href="/learn" className="text-sm text-muted underline">
-            ← All scenarios
-          </Link>
+          <div className="flex gap-3 text-sm">
+            <Link href="/learn" className="text-muted underline">
+              ← All scenarios
+            </Link>
+            {turns.some((t) => t.role === "learner") && (
+              <Link href={`/learn/session/${props.sessionId}/recap`} className="text-accent underline">
+                Finish &amp; recap
+              </Link>
+            )}
+          </div>
           <h1 className="truncate font-semibold">{props.title}</h1>
         </div>
         <button

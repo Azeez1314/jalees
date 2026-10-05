@@ -10,6 +10,9 @@ const cases: [string, string, number, boolean, string][] = [
   ["هذا بيت جديدة", "هَذَا بَيْتٌ جَدِيدٌ", 2, true, "adjective loses feminine ة"],
   ["هذا قلم", "هَذَا مِفْتَاحٌ", 1, false, "different noun entirely"],
   ["هذا بيت", "هَذَا بَيْتٌ كَبِيرٌ", 2, false, "new content word added"],
+  ["جلس الولد في الفصل", "الْوَلَدُ فِي الْفَصْلِ", 4, false, "pure deletion of an above-lesson verb (the real case from the first sessions)"],
+  ["البيت هذا", "هَذَا الْبَيْتُ", 2, true, "word-order fix keeps every word, so it still passes"],
+  ["هذا البيت كبير جدا", "هَذَا الْبَيْتُ كَبِيرٌ", 2, false, "dropping a trailing word is not a correction"],
 ];
 
 let failed = 0;
