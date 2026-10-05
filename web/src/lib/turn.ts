@@ -11,6 +11,7 @@ import {
   sameWords,
 } from "@/lib/agreement";
 import { stripTashkeel } from "@/lib/arabic";
+import { limitPraise } from "@/lib/praise";
 import { ERROR_TYPES, buildBuddySystemPrompt, type ErrorType, type PastMistake } from "@/lib/prompt";
 import { isSafeRecast } from "@/lib/recast";
 import { checkVocab } from "@/lib/vocab";
@@ -220,6 +221,9 @@ export async function generateBuddyTurn(input: {
   if (detectAgreementError(reply, scenario.lessonNo)) {
     reply = removeAgreementErrors(reply, scenario.lessonNo) || scenario.openingLine;
   }
+
+  // Praise frequency is enforced here, not by the prompt: the model praises nearly every reply no matter what it's told.
+  reply = limitPraise(reply, history.filter((t) => t.role === "buddy").map((t) => t.text), recast !== null);
 
   return {
     textDiacritized: reply,

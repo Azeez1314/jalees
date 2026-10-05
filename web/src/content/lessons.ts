@@ -96,7 +96,17 @@ export const alwaysAllowed = new Set([
   "نعم", "لا", "يا", "في", "على", "إلى",
   "السلام", "عليكم", "وعليكم", "الله", "بسم", "الرحمن", "الرحيم", "الحمد", "رب", "العالمين",
   "صباح", "الخير", "مساء", "شكرا", "عفوا", "من", "فضلك",
+  // Praise (below): taught as whole expressions from lesson 1.
+  "حسنا",
 ]);
+
+/**
+ * Set praise expressions available from lesson 1. Praise is the one thing a buddy always wants to say, and without a list
+ * it reaches for words the learner hasn't studied (جيد, ممتاز, مبروك, ما شاء الله...). No verbs (so no أحسنت): those stay
+ * banned. Adjectives agree with what they describe like any other. "شاء" is allowed only as part of ما شاء الله.
+ */
+export const praisePhrases = ["مُمْتَازٌ", "جَيِّدٌ", "رَائِعٌ", "صَحِيحٌ", "حَسَنٌ", "مَبْرُوكٌ", "مَا شَاءَ اللَّهُ"];
+for (const phrase of praisePhrases) for (const word of phrase.split(" ")) alwaysAllowed.add(normalizeArabic(word));
 
 /** Cumulative allowed vocab for lessons 1..N (inclusive), normalized. */
 export function cumulativeVocab(uptoLesson: number): Set<string> {

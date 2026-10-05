@@ -19,7 +19,8 @@
     "audio:openers": "tsx scripts/generate-opener-audio.ts",
     "check:retention": "tsx scripts/check-retention.ts",
     "try:recap": "tsx scripts/try-recap.ts",
-    "check:recap": "tsx scripts/check-recap-flow.ts"
+    "check:recap": "tsx scripts/check-recap-flow.ts",
+    "check:praise": "tsx scripts/check-praise.ts"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.5.0-beta",

@@ -34,6 +34,7 @@ restates mistakes correctly ("recast"), and shows replies fully diacritized with
 | `npm run check:content` | Fails if any scenario opener uses vocab above its lesson (run after editing content) |
 | `npm run check:recast` | Unit checks for the generic recast safety validator (no network) |
 | `npm run check:agreement` | Unit checks for the demonstrative–noun gender detector (no network) |
+| `npm run check:praise` | Praise rate-limiting: strips sentence-opening praise unless the last 3 replies had none, and never next to a correction (no network) |
 | `npm run check:usage` | Daily voice-cap arithmetic and the real `usage_daily` table (throwaway user, cleaned up) |
 | `npm run check:voice` | Real TTS → STT round trip, MIME mapping, and `/api/tts` turn-ownership rules (a fraction of a cent; macOS `afinfo`) |
 | `npm run check:retention` | Phase 3 logic (review ladder, mistake keys, streak, fact rules, tips, recap parsing) plus the real mistake-bank and memory tables with throwaway users |
@@ -142,7 +143,11 @@ Phase 0 eval stops testing what ships.
 - Recap and memory quality are `gpt-4o-mini`'s. The recap narrative is generic when the model's text is unusable (fallback), and fact
   extraction is conservative by design (an empty list is the normal outcome for lesson-only sessions).
 - There are no reminders, push notifications or emails: the only nudge is the due count on `/learn`. Review is typed, not spoken.
-- Baseline leak rate: even without memory, ~13% of Lesson 3 "Who are you?" replies contained words above the lesson — mostly praise
-  words (جيد, ممتاز, مبروك) and place names. Adding common praise words to the allowed vocabulary would remove most of them.
+- **Praise.** The buddy always wants to praise, and without an allowed list it reached for words above the lesson (جيد, ممتاز, مبروك,
+  ما شاء الله). `praisePhrases` in `content/lessons.ts` (also mirrored in `phase0-eval`) now allows a small set of whole expressions
+  from lesson 1 — no verbs, so no أحسنت. gpt-4o-mini then praised ~87% of replies ("مُمْتَازٌ!" opened most of them) and ignored the
+  prompt rule to be rare, so `lib/praise.ts` enforces it in code: sentence-opening praise is stripped unless the last 3 buddy replies
+  had none, and always next to a correction. Measured on 80 replies: 27% contain praise and 1% leak a word above the lesson (was 8%).
+  The model still prefers one word (ممتاز) when it is allowed to praise. Remaining leaks are mostly place names (مدينة, بلد, مصر).
 - Learner pronunciation is not scored (deferred to v2). The cap day is UTC. The voice cap is charged by recording length and
   estimated speech length, not by provider invoices. Text practice is limited only by 40 learner turns per session.

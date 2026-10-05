@@ -1,5 +1,5 @@
 // Fails if any scenario opener uses vocab above its lesson. Run: npm run check:content
-import { cumulativeVocab, lessons } from "@/content/lessons";
+import { cumulativeVocab, lessons, praisePhrases } from "@/content/lessons";
 import { scenarios } from "@/content/scenarios";
 import { OPENER_AUDIO_DIR, openerAudioHash } from "@/lib/ai/opener-audio";
 import { checkVocab } from "@/lib/vocab";
@@ -7,6 +7,15 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 let failures = 0;
+
+// Praise expressions must pass the vocab checker from lesson 1 (including the feminine form of an adjective).
+const praiseLeaks = checkVocab([...praisePhrases, "جَيِّدَةٌ", "مُمْتَازَةٌ"].join(". "), cumulativeVocab(1));
+if (praiseLeaks.length) {
+  console.error(`✗ praise expressions rejected at lesson 1: ${praiseLeaks.map((v) => v.token).join(", ")}`);
+  failures++;
+} else {
+  console.log("✓ praise expressions are allowed from lesson 1");
+}
 
 const audioDir = join(process.cwd(), OPENER_AUDIO_DIR);
 const manifestPath = join(audioDir, "manifest.json");
