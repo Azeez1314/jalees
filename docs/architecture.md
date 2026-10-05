@@ -9,8 +9,8 @@ Optimized for one builder coding with Claude: a single repo, one deploy target, 
 | App framework | **Next.js (App Router, TypeScript)** | One repo for UI + API routes; best-documented stack for AI pair coding; deploys to Vercel in minutes |
 | Database / Auth / Storage | **Neon** (Postgres + Neon Auth + object storage) | Chosen over Supabase for pay-as-you-go pricing with scale-to-zero (no $25/mo floor). Neon Auth is beta; sign-in is email OTP. Per-user isolation is enforced in app queries (every user-owned query filters by `user_id`) |
 | LLM (brain) | **OpenAI API (gpt-6-luna)** | Cheapest current frontier-family tier ($0.10/$0.50 per MTok) — chosen for cost over Claude; re-evaluate quality per Phase 0 results before committing |
-| STT | **Whisper API (start) → evaluate Munsit** | Whisper is one API call to integrate; swap behind an interface later |
-| TTS | **Arabic-specialized (SILMA / ElevenLabs Arabic)** | Behind the same swap-friendly interface; needs diacritized input |
+| STT | **`gpt-4o-mini-transcribe`** ($0.003/min), `language: "ar"`, no vocab prompt | Behind `web/src/lib/ai/stt.ts`. The only STT this API key can reach; the transcript is shown for confirmation because recognisers tend to "fix" learner errors. Benchmark vs Munsit on real learner speech is still open |
+| TTS | **`gpt-4o-mini-tts`** (≈$0.015/min), voice `marin` + teacher-style `instructions` | Behind `web/src/lib/ai/tts.ts` — swap to SILMA / ElevenLabs Arabic if listening tests find the Fus'ha unnatural (voices are "optimized for English"). Fed fully diacritized text. Scenario openers are pre-rendered static files |
 | Payments | **Stripe** (deferred to Phase 4) | Standard subscription billing |
 | Hosting | **Vercel** | Zero-ops; API routes handle the voice pipeline |
 

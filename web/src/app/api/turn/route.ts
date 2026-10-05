@@ -1,6 +1,6 @@
 import { scenarios } from "@/content/scenarios";
 import { getUser } from "@/lib/auth/server";
-import { getRecentMistakes, getSession, getTurns, saveExchange } from "@/lib/queries";
+import { getRecentMistakes, getSession, getTurns, saveExchange, type VoiceInput } from "@/lib/queries";
 import { generateBuddyTurn } from "@/lib/turn";
 
 const MAX_LEARNER_CHARS = 300;
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   const user = await getUser();
   if (!user) return Response.json({ error: "Not signed in" }, { status: 401 });
 
-  let body: { sessionId?: unknown; text?: unknown };
+  let body: { sessionId?: unknown; text?: unknown; voice?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -20,6 +20,15 @@ export async function POST(request: Request) {
   const text = typeof body.text === "string" ? body.text.trim() : "";
   if (!text || text.length > MAX_LEARNER_CHARS || typeof body.sessionId !== "string") {
     return Response.json({ error: `Send a message of 1-${MAX_LEARNER_CHARS} characters.` }, { status: 400 });
+  }
+
+  // Optional: the message was dictated. Keep what the recogniser heard next to what the learner confirmed.
+  let voice: VoiceInput | null = null;
+  if (body.voice && typeof body.voice === "object") {
+    const v = body.voice as { asrText?: unknown; seconds?: unknown };
+    if (typeof v.asrText === "string" && typeof v.seconds === "number" && Number.isFinite(v.seconds)) {
+      voice = { asrText: v.asrText.slice(0, MAX_LEARNER_CHARS), seconds: Math.min(30, Math.max(0, v.seconds)) };
+    }
   }
 
   const session = await getSession(user.id, body.sessionId);
@@ -42,10 +51,11 @@ export async function POST(request: Request) {
       learnerText: text,
       recentMistakes: await getRecentMistakes(user.id),
     });
-    await saveExchange(user.id, session.id, text, buddy);
+    const buddyTurnId = await saveExchange(user.id, session.id, text, voice, buddy);
 
     return Response.json({
       buddy: {
+        id: buddyTurnId,
         textDiacritized: buddy.textDiacritized,
         textDisplay: buddy.textDisplay,
         recast: buddy.recast,

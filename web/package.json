@@ -12,7 +12,11 @@
     "db:seed": "tsx scripts/seed.ts",
     "try:turn": "tsx scripts/try-turn.ts",
     "check:recast": "tsx scripts/check-recast.ts",
-    "check:agreement": "tsx scripts/check-agreement.ts"
+    "check:agreement": "tsx scripts/check-agreement.ts",
+    "spike:voice": "tsx scripts/spike-voice.ts",
+    "check:usage": "tsx scripts/check-usage.ts",
+    "check:voice": "tsx scripts/check-voice.ts",
+    "audio:openers": "tsx scripts/generate-opener-audio.ts"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.5.0-beta",

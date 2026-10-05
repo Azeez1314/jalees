@@ -109,11 +109,21 @@ export async function getTurns(sessionId: string): Promise<StoredTurn[]> {
   }));
 }
 
-/** Saves the learner's message, the buddy's reply and (if recast) the mistake in one transaction. */
+export interface VoiceInput {
+  /** What the speech-to-text heard, before the learner edited/confirmed it. */
+  asrText: string;
+  seconds: number;
+}
+
+/**
+ * Saves the learner's message, the buddy's reply and (if recast) the mistake in one transaction.
+ * Returns the buddy turn's id (the client needs it to request that turn's audio).
+ */
 export async function saveExchange(
   userId: string,
   sessionId: string,
   learnerText: string,
+  voice: VoiceInput | null,
   buddy: {
     textDiacritized: string;
     textDisplay: string;
@@ -123,15 +133,17 @@ export async function saveExchange(
     retried: boolean;
     recastRejected: boolean;
   }
-): Promise<void> {
-  await sql().transaction((tx) => [
-    tx`INSERT INTO turns (session_id, role, transcript_raw, text_display, text_diacritized)
-       VALUES (${sessionId}, 'learner', ${learnerText}, ${learnerText}, ${learnerText})`,
+): Promise<string> {
+  const results = await sql().transaction((tx) => [
+    tx`INSERT INTO turns (session_id, role, transcript_raw, text_display, text_diacritized, input_mode, asr_text, audio_seconds)
+       VALUES (${sessionId}, 'learner', ${learnerText}, ${learnerText}, ${learnerText},
+               ${voice ? "voice" : "text"}, ${voice?.asrText ?? null}, ${voice?.seconds ?? null})`,
     tx`INSERT INTO turns (session_id, role, text_display, text_diacritized, recast, prompt_repeat, vocab_flags, retried, recast_rejected)
        VALUES (
          ${sessionId}, 'buddy', ${buddy.textDisplay}, ${buddy.textDiacritized},
          ${buddy.recast ? JSON.stringify(buddy.recast) : null}::jsonb,
-         ${buddy.promptRepeat}, ${JSON.stringify(buddy.vocabFlags)}::jsonb, ${buddy.retried}, ${buddy.recastRejected})`,
+         ${buddy.promptRepeat}, ${JSON.stringify(buddy.vocabFlags)}::jsonb, ${buddy.retried}, ${buddy.recastRejected})
+       RETURNING id`,
     ...(buddy.recast
       ? [
           tx`INSERT INTO mistakes (user_id, session_id, error_type, original, corrected)
@@ -139,6 +151,16 @@ export async function saveExchange(
         ]
       : []),
   ]);
+  return results[1][0].id as string;
+}
+
+/** The diacritized text of a buddy turn, only if it belongs to one of this user's sessions (so /api/tts can't speak arbitrary text). */
+export async function getOwnBuddyTurnText(userId: string, turnId: string): Promise<string | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(turnId)) return null;
+  const rows = await sql()`
+    SELECT t.text_diacritized FROM turns t JOIN sessions s ON s.id = t.session_id
+    WHERE t.id = ${turnId} AND t.role = 'buddy' AND s.user_id = ${userId}`;
+  return rows.length ? (rows[0].text_diacritized as string) : null;
 }
 
 export async function getRecentMistakes(userId: string, limit = 5): Promise<PastMistake[]> {

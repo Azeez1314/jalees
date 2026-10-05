@@ -69,3 +69,21 @@ CREATE TABLE IF NOT EXISTS mistakes (
   created_at     timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS mistakes_user_created_idx ON mistakes (user_id, created_at DESC);
+
+-- Phase 2 (voice) ---------------------------------------------------------------------------------------------
+-- Daily voice spend per learner; the app enforces a 10-minute cap on stt_seconds + tts_seconds (src/lib/usage.ts).
+-- day is the UTC date.
+CREATE TABLE IF NOT EXISTS usage_daily (
+  user_id      text NOT NULL,
+  day          date NOT NULL,
+  stt_seconds  numeric NOT NULL DEFAULT 0,
+  tts_seconds  numeric NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, day)
+);
+
+-- Voice turns keep what the speech-to-text heard (asr_text) next to what the learner confirmed sending
+-- (transcript_raw), which shows how often the recogniser "fixes" mistakes. Audio itself is never stored.
+ALTER TABLE turns
+  ADD COLUMN IF NOT EXISTS input_mode text NOT NULL DEFAULT 'text' CHECK (input_mode IN ('text', 'voice')),
+  ADD COLUMN IF NOT EXISTS asr_text text,
+  ADD COLUMN IF NOT EXISTS audio_seconds numeric;
