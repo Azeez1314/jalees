@@ -31,7 +31,8 @@ restates mistakes correctly ("recast"), and shows replies fully diacritized with
 | Script | What it does |
 |---|---|
 | `npm run check:content` | Fails if any scenario opener uses vocab above its lesson (run after editing content) |
-| `npm run check:recast` | Unit checks for the recast safety validator (no network) |
+| `npm run check:recast` | Unit checks for the generic recast safety validator (no network) |
+| `npm run check:agreement` | Unit checks for the demonstrative–noun gender detector (no network) |
 | `npm run try:turn -- <scenarioId> "msg" …` | Runs a scripted conversation through the real turn pipeline — no DB or auth. Needs `OPENAI_API_KEY` |
 | `npm run db:migrate` / `db:seed` | Schema and content sync |
 
@@ -40,14 +41,22 @@ restates mistakes correctly ("recast"), and shows replies fully diacritized with
 1. Auth (Neon Auth session) → 401 if missing; the session must belong to the user.
 2. `lib/prompt.ts` builds the system prompt: persona, **hard lesson constraints** (allowed vocab + grammar, verb ban),
    noun-gender table, scenario goal, recent mistakes, recast rules.
-3. `lib/turn.ts` calls the model, then applies guard rails to the draft:
+3. **Agreement check first** — `lib/agreement.ts` looks for a demonstrative next to a noun from the gender table
+   (هذا/ذلك + masculine, هذه/تلك + feminine; handles ال, a fused و/ف, and possessive suffixes from lesson 5). If the
+   learner mismatched them, *the app* decides there is an error and what the fix is, and tells the model the exact
+   corrected sentence. The model is only asked to restate it.
+4. `lib/turn.ts` calls the model, then applies guard rails to the draft:
+   - **verified correction** — when the app detected an error, the recast must match its fix and the reply must model it.
+     If the model still gets it wrong, the app's own correction is used and the reply is replaced by the corrected
+     sentence, so the learner never sees a wrong one. A model-invented "correction" of an agreeing sentence is discarded;
+   - **buddy's own mistakes** — any sentence in the reply that itself mismatches a demonstrative and noun is removed;
    - **vocab leak** — `lib/vocab.ts` checks every word against the lesson whitelist;
-   - **unsafe recast** — `lib/recast.ts` only allows a correction that swaps function words or adds/drops the feminine
-     ة on an adjective; it must quote the learner's actual words and never change a noun;
+   - **unsafe recast** (anything the detector doesn't cover) — `lib/recast.ts` only allows swapping function words or
+     adding/dropping the feminine ة on an adjective; it must quote the learner's words and never change a noun;
    - **dead end** — a reply with no correction must end with a question.
    If anything trips, the model gets one rewrite request naming the problems, and the better-scoring draft wins.
    Leaks that survive are stored (`turns.vocab_flags`) rather than blocked; an unsafe recast is dropped (`turns.recast_rejected`).
-4. The learner turn, buddy turn and mistake row are saved in one transaction (`lib/queries.ts`).
+5. The learner turn, buddy turn and mistake row are saved in one transaction (`lib/queries.ts`).
 
 ## Content
 
@@ -58,9 +67,11 @@ Phase 0 eval stops testing what ships.
 
 ## Known limitations (Phase 1)
 
-- **Recast reliability** depends on the model. With `gpt-4o-mini` it was solid on demonstrative–noun gender
-  (6/6) but inconsistent on harder inputs (e.g. noun + possessive suffix). Watch `turns.recast_rejected` and
-  `turns.retried` during learner testing, and re-evaluate when a stronger model is available on the key.
+- **Recasts are only guaranteed for demonstrative–noun gender** (the commonest beginner error), which the app checks
+  itself: 30/30 deliberate errors were recast and 0/20 correct sentences were wrongly flagged against the live model.
+  Every other error type (adjective agreement, prepositions, word order…) still relies on `gpt-4o-mini`'s judgment behind
+  the generic validator, so it is conservative and will miss things. Watch `turns.recast_rejected` and `turns.retried`
+  during learner testing. The detector only knows nouns in `src/content/genders.ts` — add each lesson's nouns there.
 - **Neon Auth is beta** (`@neondatabase/auth` 0.5.0-beta). Email OTP is used instead of a clickable magic link because
   that's what Neon Auth documents. Whether OTP sign-in auto-creates new users is not documented — verify with a fresh email.
 - The vocab checker is heuristic (affix stripping), so it can miss some derived forms.

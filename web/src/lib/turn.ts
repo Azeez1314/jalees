@@ -1,6 +1,14 @@
 import OpenAI from "openai";
 import { cumulativeVocab, normalizeArabic } from "@/content/lessons";
 import type { Scenario } from "@/content/scenarios";
+import {
+  changesDemonstrative,
+  detectAgreementError,
+  hasJudgeablePair,
+  removeAgreementErrors,
+  replyModelsFix,
+  sameWords,
+} from "@/lib/agreement";
 import { stripTashkeel } from "@/lib/arabic";
 import { ERROR_TYPES, buildBuddySystemPrompt, type ErrorType, type PastMistake } from "@/lib/prompt";
 import { isSafeRecast } from "@/lib/recast";
@@ -92,6 +100,10 @@ export async function generateBuddyTurn(input: {
   const { scenario, history, learnerText, recentMistakes } = input;
   const allowed = cumulativeVocab(scenario.lessonNo);
 
+  // The commonest beginner error (demonstrative–noun gender) is decided by the app from the gender table, not by the
+  // model: when it fires, the model is told the exact fix and then verified (see agreement.ts).
+  const detected = detectAgreementError(learnerText, scenario.lessonNo);
+
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: "system", content: buildBuddySystemPrompt(scenario.lessonNo, scenario.goal, recentMistakes) },
     ...history.map(
@@ -100,13 +112,30 @@ export async function generateBuddyTurn(input: {
         content: t.text,
       })
     ),
+    ...(detected
+      ? [
+          {
+            role: "system" as const,
+            content: `The app has verified a gender-agreement error in the learner's next message. They wrote «${detected.original}»; the correct sentence is «${detected.corrected}». Your reply must be that corrected sentence, restated with full tashkeel and nothing else. Set "recast" to {"original": "${detected.original}", "corrected": <that sentence with full tashkeel>, "error_type": "gender_agreement"} and "prompt_repeat" to true.`,
+          },
+        ]
+      : []),
     { role: "user", content: learnerText },
   ];
 
   // A recast is only shown if it quotes what the learner actually wrote and is a minimal, safe fix (see recast.ts).
   const recastProblem = (p: Record<string, unknown>): string | null => {
     const r = normalizeRecast(p.recast);
+    if (detected) {
+      // The app already knows the right fix, so the model's recast must be exactly that.
+      if (r && sameWords(r.corrected, detected.corrected)) return null;
+      return `the learner's sentence has a gender-agreement error and the correct sentence is «${detected.corrected}». Restate exactly that sentence and set recast to it`;
+    }
     if (!r) return null;
+    // The model claims a demonstrative is wrong although it agrees with a noun we know — a false alarm.
+    if (changesDemonstrative(r.original, r.corrected) && hasJudgeablePair(learnerText, scenario.lessonNo)) {
+      return "the learner's demonstrative already agrees with its noun, so there is no error to correct. Set recast to null";
+    }
     const quotesLearner = normalizeArabic(learnerText).includes(normalizeArabic(r.original));
     if (quotesLearner && isSafeRecast(r.original, r.corrected, scenario.lessonNo)) return null;
     return "your correction was rejected — it must quote the learner's words exactly and fix only the agreement or a particle (e.g. swap هذه/هذا). Never change the learner's noun to a different word. If you are not certain there is an error, set recast to null";
@@ -117,8 +146,21 @@ export async function generateBuddyTurn(input: {
     const flags = checkVocab(d.reply, allowed);
     const recastIssue = recastProblem(d.parsed);
     // With no correction to repeat, the learner needs something to answer or the conversation dead-ends.
-    const noQuestion = (recastIssue !== null || normalizeRecast(d.parsed.recast) === null) && !/[؟?]/.test(d.reply);
-    return { d, flags, recastIssue, noQuestion, score: flags.length * 2 + (recastIssue ? 2 : 0) + (noQuestion ? 1 : 0) };
+    const noQuestion =
+      !detected && (recastIssue !== null || normalizeRecast(d.parsed.recast) === null) && !/[؟?]/.test(d.reply);
+    // When we know the fix, the reply must actually model it (the observed failure: swapping the noun for كتابة).
+    const missesFix = detected !== null && !replyModelsFix(d.reply, detected);
+    // The buddy must never itself pair a demonstrative with a noun of the wrong gender.
+    const badReply = detectAgreementError(d.reply, scenario.lessonNo);
+    return {
+      d,
+      flags,
+      recastIssue,
+      noQuestion,
+      missesFix,
+      badReply,
+      score: flags.length * 2 + (recastIssue ? 2 : 0) + (missesFix ? 2 : 0) + (badReply ? 3 : 0) + (noQuestion ? 1 : 0),
+    };
   };
 
   let best = assess(await draft(messages));
@@ -135,6 +177,12 @@ export async function generateBuddyTurn(input: {
       problems.push(`your reply used words the learner has not studied yet: ${words}. Use ONLY the allowed vocabulary and grammar`);
     }
     if (best.recastIssue) problems.push(best.recastIssue);
+    if (best.badReply) {
+      problems.push(
+        `your reply contains a gender-agreement mistake («${best.badReply.original}») — هذا/ذلك go with masculine nouns and هذه/تلك with feminine nouns`
+      );
+    }
+    if (best.missesFix && detected) problems.push(`your reply must be the corrected sentence «${detected.corrected}» with full tashkeel`);
     if (best.noQuestion) {
       problems.push(
         "your reply must end with a short question the learner can answer, pointing at something new (for example ما هذا؟), instead of just repeating what they said"
@@ -157,14 +205,33 @@ export async function generateBuddyTurn(input: {
     }
   }
 
-  const recast = best.recastIssue ? null : normalizeRecast(best.d.parsed.recast);
+  let recast = best.recastIssue ? null : normalizeRecast(best.d.parsed.recast);
+  let reply = best.d.reply;
+
+  if (detected) {
+    // Deterministic outcome: the learner always sees the verified correction, quoted from their own words. Prefer the
+    // model's fully diacritized wording of it; otherwise fall back to ours (only the swapped word carries tashkeel).
+    // (If the model forgot the recast but its reply is the fix, that reply is the best-diacritized wording we have.)
+    const fullyDiacritized = [recast?.corrected, reply].find((c) => c && sameWords(c, detected.corrected));
+    const corrected = fullyDiacritized?.trim() ?? detected.corrected;
+    recast = { original: detected.original, corrected, errorType: "gender_agreement" };
+    // If the model still never modelled the fix, say the corrected sentence ourselves rather than show a wrong reply.
+    if (best.missesFix) reply = corrected;
+  }
+
+  // Last line of defence: never show a reply that itself mismatches a demonstrative and noun. Drop the bad sentence(s);
+  // if nothing is left, fall back to the scenario's own (verified) opening line.
+  if (detectAgreementError(reply, scenario.lessonNo)) {
+    reply = removeAgreementErrors(reply, scenario.lessonNo) || scenario.openingLine;
+  }
+
   return {
-    textDiacritized: best.d.reply,
-    textDisplay: stripTashkeel(best.d.reply),
+    textDiacritized: reply,
+    textDisplay: stripTashkeel(reply),
     recast,
-    promptRepeat: recast !== null && best.d.parsed.prompt_repeat !== false,
-    vocabFlags: [...new Set(best.flags.map((f) => f.token))],
+    promptRepeat: detected ? true : recast !== null && best.d.parsed.prompt_repeat !== false,
+    vocabFlags: [...new Set((reply === best.d.reply ? best.flags : checkVocab(reply, allowed)).map((f) => f.token))],
     retried,
-    recastRejected: best.recastIssue !== null,
+    recastRejected: detected ? false : best.recastIssue !== null,
   };
 }
