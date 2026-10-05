@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
 import { stripTashkeel } from "@/lib/arabic";
 import type { Recast } from "@/lib/turn";
 import { setTashkeelPref } from "../../actions";
+import { ArabicKeyboard, useArabicKeyboard } from "./ArabicKeyboard";
+
+const MAX_CHARS = 300;
 
 export interface ClientTurn {
   id: string;
@@ -29,6 +32,9 @@ export function Conversation(props: {
   const [tashkeel, setTashkeel] = useState(props.initialTashkeel);
   const [, startTransition] = useTransition();
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const pendingCaret = useRef<number | null>(null);
+  const keyboard = useArabicKeyboard();
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -37,6 +43,34 @@ export function Conversation(props: {
   const last = turns[turns.length - 1];
   const awaitingRepeat = last?.role === "buddy" && last.promptRepeat;
   const show = (t: ClientTurn) => (tashkeel ? t.textDiacritized : t.textDisplay);
+
+  // React resets the caret to the end when a controlled value changes, so restore it after the new value commits.
+  useLayoutEffect(() => {
+    const caret = pendingCaret.current;
+    if (caret === null) return;
+    pendingCaret.current = null;
+    inputRef.current?.focus();
+    inputRef.current?.setSelectionRange(caret, caret);
+  }, [text]);
+
+  /** Replaces the textarea's selection (or inserts at the caret) and puts the caret after the change. */
+  function edit(transform: (before: string, after: string, selected: boolean) => { value: string; caret: number } | null) {
+    const el = inputRef.current;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const result = transform(text.slice(0, start), text.slice(end), start !== end);
+    if (!result || result.value.length > MAX_CHARS) return;
+    pendingCaret.current = result.caret;
+    setText(result.value);
+  }
+
+  const insert = (chunk: string) => edit((before, after) => ({ value: before + chunk + after, caret: before.length + chunk.length }));
+  const backspace = () =>
+    edit((before, after, selected) => {
+      if (selected) return { value: before + after, caret: before.length };
+      if (!before) return null;
+      return { value: before.slice(0, -1) + after, caret: before.length - 1 };
+    });
 
   async function send(e?: React.FormEvent) {
     e?.preventDefault();
@@ -161,12 +195,28 @@ export function Conversation(props: {
             dir="rtl"
             lang="ar"
             rows={2}
-            maxLength={300}
+            maxLength={MAX_CHARS}
+            ref={inputRef}
+            // With the on-screen keyboard open, keep the phone's own keyboard from covering it.
+            inputMode={keyboard.open ? "none" : "text"}
             disabled={sending}
             placeholder="Type your reply in Arabic — no need for tashkeel"
             aria-label="Your reply"
             className="arabic min-h-12 flex-1 resize-none rounded-lg border border-line bg-card px-3 text-xl outline-none placeholder:font-sans placeholder:text-sm placeholder:text-muted focus:border-accent"
           />
+          <button
+            type="button"
+            onClick={keyboard.toggle}
+            aria-pressed={keyboard.open}
+            aria-label="Arabic keyboard"
+            title="Arabic keyboard"
+            className={`self-end rounded-lg border border-line px-3 py-2.5 hover:bg-accent-soft ${keyboard.open ? "bg-accent-soft" : ""}`}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="2" y="6" width="20" height="12" rx="2" />
+              <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" />
+            </svg>
+          </button>
           <button
             type="submit"
             disabled={sending || !text.trim()}
@@ -175,6 +225,7 @@ export function Conversation(props: {
             Send
           </button>
         </div>
+        {keyboard.open && <ArabicKeyboard onInsert={insert} onBackspace={backspace} disabled={sending} />}
       </form>
     </div>
   );
