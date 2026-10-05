@@ -7,7 +7,7 @@ Optimized for one builder coding with Claude: a single repo, one deploy target, 
 | Layer | Choice | Why |
 |---|---|---|
 | App framework | **Next.js (App Router, TypeScript)** | One repo for UI + API routes; best-documented stack for AI pair coding; deploys to Vercel in minutes |
-| Database / Auth / Storage | **Supabase** | Postgres + auth + file storage in one service; generous free tier; RLS for per-user data |
+| Database / Auth / Storage | **Neon** (Postgres + Neon Auth + object storage) | Chosen over Supabase for pay-as-you-go pricing with scale-to-zero (no $25/mo floor). Neon Auth is beta; sign-in is email OTP. Per-user isolation is enforced in app queries (every user-owned query filters by `user_id`) |
 | LLM (brain) | **OpenAI API (gpt-6-luna)** | Cheapest current frontier-family tier ($0.10/$0.50 per MTok) — chosen for cost over Claude; re-evaluate quality per Phase 0 results before committing |
 | STT | **Whisper API (start) → evaluate Munsit** | Whisper is one API call to integrate; swap behind an interface later |
 | TTS | **Arabic-specialized (SILMA / ElevenLabs Arabic)** | Behind the same swap-friendly interface; needs diacritized input |
@@ -33,7 +33,7 @@ flowchart LR
     LLM[OpenAI API]
     TTS[TTS provider]
   end
-  subgraph Supabase
+  subgraph Neon
     DB[(Postgres)]
     AUTH[Auth]
     STORE[Audio storage]
@@ -75,7 +75,7 @@ Output is always **fully diacritized internally**; display layer strips tashkeel
 ## Data model (Postgres)
 
 ```
-users            (Supabase auth)
+users            (Neon Auth, neon_auth schema; user_id stored as text)
 profiles         user_id, display_name, level_book, level_lesson, tashkeel_pref, streak, created_at
 lessons          id, book, lesson_no, vocab jsonb, grammar jsonb, scenario_ids
 scenarios        id, lesson_id, title, goal, opening_line, target_structures jsonb
@@ -87,7 +87,7 @@ subscriptions    user_id, stripe_customer_id, status, plan, trial_ends_at
 usage_daily      user_id, date, voice_seconds   -- enforces 10-min cap
 ```
 
-Row-level security: every table keyed by `user_id` with Supabase RLS.
+Isolation: every user-owned table is keyed by `user_id` and every query filters on it (`web/src/lib/queries.ts`). Neon RLS is a possible later hardening.
 
 ## Supporting flows
 
