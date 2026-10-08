@@ -11,7 +11,7 @@ Optimized for one builder coding with Claude: a single repo, one deploy target, 
 | LLM (brain) | **OpenAI API (gpt-6-luna)** | Cheapest current frontier-family tier ($0.10/$0.50 per MTok) — chosen for cost over Claude; re-evaluate quality per Phase 0 results before committing |
 | STT | **`gpt-4o-mini-transcribe`** ($0.003/min), `language: "ar"`, no vocab prompt | Behind `web/src/lib/ai/stt.ts`. The only STT this API key can reach; the transcript is shown for confirmation because recognisers tend to "fix" learner errors. Benchmark vs Munsit on real learner speech is still open |
 | TTS | **`gpt-4o-mini-tts`** (≈$0.015/min), voice `marin` + teacher-style `instructions` | Behind `web/src/lib/ai/tts.ts` — swap to SILMA / ElevenLabs Arabic if listening tests find the Fus'ha unnatural (voices are "optimized for English"). Fed fully diacritized text. Scenario openers are pre-rendered static files |
-| Payments | **Stripe** (deferred to Phase 4) | Standard subscription billing |
+| Payments | **Stripe** (built, Phase 4) | Hosted Checkout + Customer Portal; the 7-day free trial is app-managed (no card), so Stripe only handles paying customers. Webhook re-reads subscription state from Stripe on every event (events arrive duplicated and out of order) |
 | Hosting | **Vercel** | Zero-ops; API routes handle the voice pipeline |
 
 Rule: every external AI service sits behind a thin internal interface (`stt.ts`, `tts.ts`, `llm.ts`) so vendors are swappable without touching app logic.
@@ -91,7 +91,7 @@ Isolation: every user-owned table is keyed by `user_id` and every query filters 
 
 ## Supporting flows
 
-**Placement** (`/api/placement`): scripted 6–8 turn conversation with escalating difficulty; the LLM scores production per turn against the lesson ladder; writes `level_book/level_lesson` to profile.
+**Placement** (`/api/placement/*`): ten short English → Arabic production prompts, two per lesson, escalating; stops at the first miss and starts the learner at that lesson, writing `level_lesson` to the profile. **Scored deterministically** (word slots + the gender-agreement detector), not by an LLM — a deliberate change from the original design: it is free, can't hallucinate a grade, and is unit-testable. Covers Book 1 lessons 1–5 only.
 
 **Session recap** (`/api/recap`): on session end, one LLM call over the session's turns + mistakes → recap card (patterns, not one-offs) + updates `memory_facts` (extract new personal facts) + schedules mistakes into spaced review (`review_due_at`: 1d/3d/7d/21d).
 
@@ -105,7 +105,7 @@ Isolation: every user-owned table is keyed by `user_id` and every query filters 
 - **Phase 1 — Text conversation loop.** Auth, lessons/scenarios tables (hand-author Book 2, lessons 1–5), `/api/turn` text-only, recast + display. Usable product for testing pedagogy with 5–10 real learners.
 - **Phase 2 — Voice.** MediaRecorder capture, STT/TTS behind interfaces, transcript confirmation UI, session cap.
 - **Phase 3 — Memory + recap + mistake review.** The retention layer. → built in `web/` (see its README, "Retention"). Recap patterns are deterministic with curated tips; buddy-side Arabic memory is OFF because measured leakage tripled (13% → 39%).
-- **Phase 4 — Placement + Stripe + polish.** Trial → subscription; landing page; creator-partnership launch.
+- **Phase 4 — Placement + Stripe + polish.** Trial → subscription; landing page; creator-partnership launch. → built in `web/` (README: *Billing and access*, *Placement*, *Your data*, *Pre-launch*). Remaining before launch is in `npm run check:launch` — chiefly legal review, live Stripe, hosting, and **content beyond Book 1 lesson 5**.
 
 ## Top technical risks (watch continuously)
 

@@ -45,6 +45,10 @@ export function Conversation(props: {
   initialTurns: ClientTurn[];
   initialTashkeel: boolean;
   initialRemainingSeconds: number;
+  /** True when the free trial is over and there is no subscription: the conversation is read-only. */
+  initialLocked?: boolean;
+  /** Days of free trial left, when on trial and it is nearly over (null otherwise). */
+  trialDaysLeft?: number | null;
 }) {
   const [turns, setTurns] = useState<ClientTurn[]>(props.initialTurns);
   const [text, setText] = useState("");
@@ -52,6 +56,7 @@ export function Conversation(props: {
   const [error, setError] = useState<string | null>(null);
   const [tashkeel, setTashkeel] = useState(props.initialTashkeel);
   const [remaining, setRemaining] = useState(props.initialRemainingSeconds);
+  const [locked, setLocked] = useState(props.initialLocked ?? false);
   const [voiceMeta, setVoiceMeta] = useState<VoiceMeta | null>(null);
   const [transcribing, setTranscribing] = useState(false);
   const [, startTransition] = useTransition();
@@ -114,6 +119,7 @@ export function Conversation(props: {
       const res = await fetch("/api/stt", { method: "POST", body: form });
       const data = await res.json();
       if (typeof data.remainingSeconds === "number") setRemaining(data.remainingSeconds);
+      if (res.status === 402) setLocked(true);
       if (!res.ok) throw new Error(data.error ?? "Couldn't transcribe that.");
       // The transcript lands in the normal text box: the learner checks it ("did I hear you right?"), can fix it
       // (including with the Arabic keyboard), and sends it down the same path as typed text.
@@ -148,6 +154,7 @@ export function Conversation(props: {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       if (res.status === 429) setRemaining(0);
+      if (res.status === 402) setLocked(true);
       throw new Error(res.status === 429 ? VOICE_USED_UP : (data.error ?? "Couldn't generate the audio."));
     }
     const left = Number(res.headers.get("X-Voice-Remaining"));
@@ -186,6 +193,7 @@ export function Conversation(props: {
         body: JSON.stringify({ sessionId: props.sessionId, text: message, voice: viaVoice ?? undefined }),
       });
       const data = await res.json();
+      if (res.status === 402) setLocked(true);
       if (!res.ok) throw new Error(data.error ?? "Something went wrong.");
       const buddyId = data.buddy.id as string;
       setTurns((prev) => [
@@ -259,6 +267,15 @@ export function Conversation(props: {
         </button>
       </div>
 
+      {!locked && props.trialDaysLeft != null && (
+        <p className="mb-2 rounded-lg bg-accent-soft px-3 py-1.5 text-sm text-accent">
+          Free trial: {props.trialDaysLeft} {props.trialDaysLeft === 1 ? "day" : "days"} left ·{" "}
+          <Link href="/learn/billing" className="underline">
+            see plan
+          </Link>
+        </p>
+      )}
+
       <div className="flex flex-1 flex-col gap-4 pb-4" aria-live="polite">
         {turns.map((t) => (
           <div key={t.id} className={`flex flex-col gap-2 ${t.role === "learner" ? "items-end" : "items-start"}`}>
@@ -314,6 +331,22 @@ export function Conversation(props: {
         <div ref={endRef} />
       </div>
 
+      {locked ? (
+        <div role="status" className="sticky bottom-0 flex flex-col gap-2 border-t border-line bg-paper py-4">
+          <p className="rounded-xl bg-warn-soft px-4 py-3 text-warn">
+            <span className="font-medium">Your free trial has ended.</span> Subscribe to keep talking with your buddy — you can
+            still read this conversation, review your mistakes and see your notes.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/learn/billing" className="rounded-lg bg-accent px-5 py-2.5 font-medium text-accent-ink hover:opacity-90">
+              Subscribe
+            </Link>
+            <Link href="/learn/review" className="rounded-lg border border-line px-5 py-2.5 hover:bg-accent-soft">
+              Review mistakes
+            </Link>
+          </div>
+        </div>
+      ) : (
       <form onSubmit={send} className="sticky bottom-0 flex flex-col gap-2 border-t border-line bg-paper py-3">
         {awaitingRepeat && !recorder.recording && !voiceMeta && (
           <p className="rounded-lg bg-accent-soft px-3 py-1.5 text-sm text-accent">
@@ -409,6 +442,7 @@ export function Conversation(props: {
         </div>
         {keyboard.open && <ArabicKeyboard onInsert={insert} onBackspace={backspace} disabled={busy} />}
       </form>
+      )}
     </div>
   );
 }

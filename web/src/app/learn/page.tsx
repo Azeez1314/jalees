@@ -5,6 +5,8 @@ import { listFacts } from "@/lib/memory";
 import { countDueMistakes } from "@/lib/mistake-bank";
 import { getLatestNextStep, getOrCreateProfile, getPracticeDays, listRecentSessions } from "@/lib/queries";
 import { computeStreak } from "@/lib/streak";
+import { getAccess } from "@/lib/subscriptions";
+import { AccessBanner } from "./AccessBanner";
 import { startSession, updateLevel } from "./actions";
 import { SignOutButton } from "./SignOutButton";
 import { StatCards } from "./StatCards";
@@ -18,7 +20,8 @@ export default async function LearnPage() {
   if (!user) redirect("/auth/sign-in");
 
   const profile = await getOrCreateProfile(user.id, user.name ?? null);
-  const [recent, dueCount, facts, practiceDays, nextStep] = await Promise.all([
+  const [access, recent, dueCount, facts, practiceDays, nextStep] = await Promise.all([
+    getAccess(user.id),
     listRecentSessions(user.id),
     countDueMistakes(user.id),
     listFacts(user.id),
@@ -37,17 +40,29 @@ export default async function LearnPage() {
         <SignOutButton />
       </header>
 
+      <AccessBanner access={access} />
+
       {nextStep && (
         <p className="mb-4 rounded-xl bg-accent-soft px-4 py-3 text-accent">
           <span className="font-medium">Last time:</span> {nextStep}
         </p>
       )}
 
+      {!profile.placedAt && (
+        <Link href="/learn/placement" className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-accent bg-card px-4 py-3 hover:bg-accent-soft">
+          <span>
+            <span className="block font-medium">Find your starting point</span>
+            <span className="block text-sm text-muted">A few quick sentences — it tells you which lesson to begin with.</span>
+          </span>
+          <span className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-ink">Start</span>
+        </Link>
+      )}
+
       <StatCards streak={streak} dueCount={dueCount} factCount={facts.length} />
 
       <form action={updateLevel} className="mb-8 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-card p-4">
         <label htmlFor="lesson" className="font-medium">
-          I&apos;ve studied Madinah Book 1 up to lesson
+          I&apos;m practising Madinah Book 1, lesson
         </label>
         <select
           id="lesson"
@@ -114,7 +129,9 @@ export default async function LearnPage() {
                       <form action={startSession}>
                         <input type="hidden" name="scenarioId" value={s.id} />
                         <button
-                          className={`w-full rounded-lg border border-line bg-card px-4 py-3 text-left hover:bg-accent-soft ${
+                          disabled={!access.allowed}
+                          title={access.allowed ? undefined : "Your free trial has ended — subscribe to start a conversation"}
+                          className={`w-full rounded-lg border border-line bg-card px-4 py-3 text-left hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-card ${
                             ahead ? "opacity-60" : ""
                           }`}
                         >

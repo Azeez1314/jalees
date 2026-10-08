@@ -1,10 +1,14 @@
 import { scenarios } from "@/content/scenarios";
 import { getUser } from "@/lib/auth/server";
+import { paywall } from "@/lib/guard";
 import { pickFactsForSession } from "@/lib/memory";
 import { getPromptMistakes } from "@/lib/mistake-bank";
 import { getSession, getTurns, saveExchange, type VoiceInput } from "@/lib/queries";
 import { BUDDY_SPEAKS_MEMORY, FACTS_PER_SESSION } from "@/lib/facts";
 import { generateBuddyTurn } from "@/lib/turn";
+
+// A turn is up to three model calls (draft, rewrite, plus retries); Vercel's default function limit is shorter than that.
+export const maxDuration = 30;
 
 const MAX_LEARNER_CHARS = 300;
 /** Cost guard until the daily voice-minute cap lands in Phase 2. */
@@ -13,6 +17,8 @@ const MAX_LEARNER_TURNS_PER_SESSION = 40;
 export async function POST(request: Request) {
   const user = await getUser();
   if (!user) return Response.json({ error: "Not signed in" }, { status: 401 });
+  const locked = await paywall(user.id);
+  if (locked) return locked;
 
   let body: { sessionId?: unknown; text?: unknown; voice?: unknown };
   try {

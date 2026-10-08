@@ -12,6 +12,7 @@ import {
 } from "@/lib/agreement";
 import { stripTashkeel } from "@/lib/arabic";
 import { limitPraise } from "@/lib/praise";
+import { containsScripture, stripScripture } from "@/lib/scripture";
 import { ERROR_TYPES, buildBuddySystemPrompt, type ErrorType, type PastMistake } from "@/lib/prompt";
 import { isSafeRecast } from "@/lib/recast";
 import { checkVocab } from "@/lib/vocab";
@@ -149,6 +150,8 @@ export async function generateBuddyTurn(input: {
     const missesFix = detected !== null && !replyModelsFix(d.reply, detected);
     // The buddy must never itself pair a demonstrative with a noun of the wrong gender.
     const badReply = detectAgreementError(d.reply, scenario.lessonNo);
+    // Non-negotiable: no scripture, ever (see lib/scripture.ts).
+    const scripture = containsScripture(d.reply);
     return {
       d,
       flags,
@@ -156,7 +159,8 @@ export async function generateBuddyTurn(input: {
       noQuestion,
       missesFix,
       badReply,
-      score: flags.length * 2 + (recastIssue ? 2 : 0) + (missesFix ? 2 : 0) + (badReply ? 3 : 0) + (noQuestion ? 1 : 0),
+      scripture,
+      score: flags.length * 2 + (recastIssue ? 2 : 0) + (missesFix ? 2 : 0) + (badReply ? 3 : 0) + (scripture ? 10 : 0) + (noQuestion ? 1 : 0),
     };
   };
 
@@ -174,6 +178,9 @@ export async function generateBuddyTurn(input: {
       problems.push(`your reply used words the learner has not studied yet: ${words}. Use ONLY the allowed vocabulary and grammar`);
     }
     if (best.recastIssue) problems.push(best.recastIssue);
+    if (best.scripture) {
+      problems.push("your reply refers to the Qur'an or hadith, which you must never do — remove it and just continue the everyday conversation");
+    }
     if (best.badReply) {
       problems.push(
         `your reply contains a gender-agreement mistake («${best.badReply.original}») — هذا/ذلك go with masculine nouns and هذه/تلك with feminine nouns`
@@ -220,6 +227,12 @@ export async function generateBuddyTurn(input: {
   // if nothing is left, fall back to the scenario's own (verified) opening line.
   if (detectAgreementError(reply, scenario.lessonNo)) {
     reply = removeAgreementErrors(reply, scenario.lessonNo) || scenario.openingLine;
+  }
+
+  // Last line of defence for the non-negotiable rule: if scripture survived the rewrite, remove those sentences (or fall back
+  // to the scenario's own verified opening line) rather than ever show it.
+  if (containsScripture(reply)) {
+    reply = stripScripture(reply) || scenario.openingLine;
   }
 
   // Praise frequency is enforced here, not by the prompt: the model praises nearly every reply no matter what it's told.

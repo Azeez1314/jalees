@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { scenarios } from "@/content/scenarios";
 import { getUser } from "@/lib/auth/server";
 import { getOrCreateProfile, getSession, getTurns } from "@/lib/queries";
+import { getAccess } from "@/lib/subscriptions";
 import { getUsage } from "@/lib/usage";
 import { Conversation } from "./Conversation";
 
@@ -17,10 +18,11 @@ export default async function SessionPage({ params }: PageProps<"/learn/session/
   const scenario = scenarios.find((s) => s.id === session.scenarioId);
   if (!scenario) notFound();
 
-  const [profile, turns, usage] = await Promise.all([
+  const [profile, turns, usage, access] = await Promise.all([
     getOrCreateProfile(user.id, user.name ?? null),
     getTurns(id),
     getUsage(user.id),
+    getAccess(user.id),
   ]);
 
   return (
@@ -39,6 +41,8 @@ export default async function SessionPage({ params }: PageProps<"/learn/session/
       }))}
       initialTashkeel={profile.tashkeelPref === "full"}
       initialRemainingSeconds={Math.round(usage.remainingSeconds)}
+      initialLocked={!access.allowed}
+      trialDaysLeft={access.reason === "trial" && access.trialDaysLeft <= 3 ? access.trialDaysLeft : null}
     />
   );
 }

@@ -11,6 +11,10 @@ export interface Profile {
   levelBook: number;
   levelLesson: number;
   tashkeelPref: TashkeelPref;
+  /** End of the free trial (null only for rows that somehow predate billing; treated as no trial). */
+  trialEndsAt: Date | null;
+  /** When the learner finished the placement test (null = not yet). */
+  placedAt: Date | null;
 }
 
 export interface StoredTurn {
@@ -36,6 +40,8 @@ interface ProfileRow {
   level_book: number;
   level_lesson: number;
   tashkeel_pref: TashkeelPref;
+  trial_ends_at: string | Date | null;
+  placed_at: string | Date | null;
 }
 
 function toProfile(r: ProfileRow): Profile {
@@ -45,6 +51,8 @@ function toProfile(r: ProfileRow): Profile {
     levelBook: r.level_book,
     levelLesson: r.level_lesson,
     tashkeelPref: r.tashkeel_pref,
+    trialEndsAt: r.trial_ends_at ? new Date(r.trial_ends_at) : null,
+    placedAt: r.placed_at ? new Date(r.placed_at) : null,
   };
 }
 

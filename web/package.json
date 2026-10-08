@@ -20,7 +20,14 @@
     "check:retention": "tsx scripts/check-retention.ts",
     "try:recap": "tsx scripts/try-recap.ts",
     "check:recap": "tsx scripts/check-recap-flow.ts",
-    "check:praise": "tsx scripts/check-praise.ts"
+    "check:praise": "tsx scripts/check-praise.ts",
+    "check:billing": "tsx scripts/check-billing.ts",
+    "check:placement": "tsx scripts/check-placement.ts",
+    "check:stripe": "tsx scripts/check-stripe-live.ts",
+    "check:account": "tsx scripts/check-account.ts",
+    "check:scripture": "tsx scripts/check-scripture.ts",
+    "metrics": "tsx scripts/metrics.ts",
+    "check:launch": "tsx scripts/check-launch.ts"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.5.0-beta",
@@ -28,7 +35,8 @@
     "next": "16.3.8",
     "openai": "^4.104.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "stripe": "^23.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

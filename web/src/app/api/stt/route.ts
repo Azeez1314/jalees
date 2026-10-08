@@ -1,6 +1,9 @@
 import { extensionFor, transcribe } from "@/lib/ai/stt";
 import { getUser } from "@/lib/auth/server";
+import { paywall } from "@/lib/guard";
 import { addUsage, getUsage } from "@/lib/usage";
+
+export const maxDuration = 30;
 
 const MAX_BYTES = 1_000_000; // 30 s of opus is ~250 KB; this leaves headroom without letting anyone upload a podcast
 const MAX_SECONDS = 30;
@@ -9,6 +12,8 @@ const MAX_SECONDS = 30;
 export async function POST(request: Request) {
   const user = await getUser();
   if (!user) return Response.json({ error: "Not signed in" }, { status: 401 });
+  const locked = await paywall(user.id);
+  if (locked) return locked;
 
   const usage = await getUsage(user.id);
   if (usage.remainingSeconds <= 0) {

@@ -1,7 +1,10 @@
 import { synthesize } from "@/lib/ai/tts";
 import { getUser } from "@/lib/auth/server";
+import { paywall } from "@/lib/guard";
 import { getOwnBuddyTurnText } from "@/lib/queries";
 import { addUsage, getUsage } from "@/lib/usage";
+
+export const maxDuration = 30;
 
 /**
  * Speaks one of the buddy's own turns. Takes a turn id, not text: the server loads the text for a turn the user owns,
@@ -10,6 +13,8 @@ import { addUsage, getUsage } from "@/lib/usage";
 export async function POST(request: Request) {
   const user = await getUser();
   if (!user) return Response.json({ error: "Not signed in" }, { status: 401 });
+  const locked = await paywall(user.id);
+  if (locked) return locked;
 
   let turnId: unknown;
   try {

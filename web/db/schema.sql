@@ -114,3 +114,44 @@ CREATE INDEX IF NOT EXISTS memory_facts_user_idx ON memory_facts (user_id, creat
 
 -- Post-session recap (generated once, on demand) — see web/src/lib/recap.ts.
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS recap jsonb;
+
+-- Phase 4 (billing + placement) ---------------------------------------------------------------------------------
+-- The free trial is app-managed (no card): trial_ends_at on the profile. Stripe only handles paying customers.
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS trial_ends_at timestamptz,
+  ADD COLUMN IF NOT EXISTS placed_at timestamptz;
+-- New profiles get a 7-day trial; profiles that existed before billing get one too (one-time, so nobody is locked out on launch).
+ALTER TABLE profiles ALTER COLUMN trial_ends_at SET DEFAULT (now() + interval '7 days');
+UPDATE profiles SET trial_ends_at = now() + interval '7 days' WHERE trial_ends_at IS NULL;
+
+-- One row per paying (or comped) learner; kept in step with Stripe by the webhook (src/lib/subscriptions.ts).
+-- plan: 'monthly' = Stripe subscription, 'comp' = granted by hand (scripts/grant-access.ts), no Stripe objects.
+CREATE TABLE IF NOT EXISTS subscriptions (
+  user_id                 text PRIMARY KEY,
+  stripe_customer_id      text UNIQUE,
+  stripe_subscription_id  text UNIQUE,
+  status                  text NOT NULL DEFAULT 'incomplete',
+  plan                    text NOT NULL DEFAULT 'monthly' CHECK (plan IN ('monthly', 'comp')),
+  cancel_at_period_end    boolean NOT NULL DEFAULT false,
+  current_period_end      timestamptz,
+  updated_at              timestamptz NOT NULL DEFAULT now()
+);
+
+-- Stripe delivers webhooks at least once and out of order: processed event ids are recorded so duplicates are skipped.
+CREATE TABLE IF NOT EXISTS stripe_events (
+  id           text PRIMARY KEY,
+  type         text NOT NULL,
+  received_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- Placement test attempts. answers holds each item's id and the learner's answer; pass/fail is stored but never shown per item.
+CREATE TABLE IF NOT EXISTS placement_attempts (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        text NOT NULL,
+  started_at     timestamptz NOT NULL DEFAULT now(),
+  finished_at    timestamptz,
+  result_lesson  int,
+  beyond_content boolean NOT NULL DEFAULT false,
+  answers        jsonb NOT NULL DEFAULT '[]'
+);
+CREATE INDEX IF NOT EXISTS placement_attempts_user_idx ON placement_attempts (user_id, started_at DESC);

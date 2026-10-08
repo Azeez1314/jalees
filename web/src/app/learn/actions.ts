@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { scenarios } from "@/content/scenarios";
 import { stripTashkeel } from "@/lib/arabic";
 import { getUser } from "@/lib/auth/server";
+import { getAccess } from "@/lib/subscriptions";
 import { addFact, deleteAllFacts, deleteFact } from "@/lib/memory";
 import { createSession, getOrCreateProfile, updateProfile, type TashkeelPref } from "@/lib/queries";
 
@@ -18,6 +19,8 @@ export async function startSession(formData: FormData) {
   const user = await requireUser();
   const scenario = scenarios.find((s) => s.id === formData.get("scenarioId"));
   if (!scenario) redirect("/learn");
+  // Conversations need a trial or subscription; everything else (review, memory, recap) stays open.
+  if (!(await getAccess(user.id)).allowed) redirect("/learn/billing?reason=expired");
 
   await getOrCreateProfile(user.id, user.name ?? null);
   const sessionId = await createSession(user.id, scenario.id, {

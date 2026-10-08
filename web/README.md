@@ -1,4 +1,4 @@
-# Jalees web app (Phases 1-3: text and voice conversation, recaps, mistake review)
+# Jalees web app (Phases 1-4: conversation, recaps, review, placement, billing)
 
 Next.js 16 (App Router) + Neon (Postgres and Neon Auth) + OpenAI. Learners sign in with an emailed one-time code, pick a
 Madinah Book 1 scenario, and chat in Arabic. The buddy only uses the vocabulary and grammar of the scenario's lesson,
@@ -31,6 +31,13 @@ restates mistakes correctly ("recast"), and shows replies fully diacritized with
 
 | Script | What it does |
 |---|---|
+| `npm run check:billing` | The access matrix (trial / subscribed / past_due / canceled / comp), the Stripe webhook handler with signed fake events (duplicates, out-of-order, outage-then-retry, bad signatures), the paywall, and the exact parameters sent to Checkout/Portal. Real Neon tables, throwaway users |
+| `npm run check:placement` | The placement items are in-lesson and score correctly, wrong answers fail, the stop rule and outcomes, and the real attempt flow (resume, double-submit, ownership) |
+| `npm run check:account` | Data export and deletion across all 8 tables with two learners: A's data is fully exported/removed, B's is untouched |
+| `npm run check:scripture` | The "never quotes Qur'an or hadith" guard, plus `-- --live` to try to provoke the real model |
+| `npm run check:stripe` | **Stripe test mode only** (refuses live keys): your Price is $9 USD monthly, and a real Checkout Session and Portal session can be created. No payment is made |
+| `npm run check:launch` | Pre-launch checklist: fails while placeholders, draft legal pages, test-mode Stripe or a localhost APP_URL remain |
+| `npm run metrics` | The spec's launch metrics (activation, engagement, D7/D30, trial→paid, cost per learner-day), aggregates only |
 | `npm run check:content` | Fails if any scenario opener uses vocab above its lesson (run after editing content) |
 | `npm run check:recast` | Unit checks for the generic recast safety validator (no network) |
 | `npm run check:agreement` | Unit checks for the demonstrative–noun gender detector (no network) |
@@ -119,6 +126,73 @@ words. At Book 1 almost no personal fact is sayable in-lesson anyway. Facts curr
 page. To re-enable, re-run that comparison (`npm run try:turn -- b1l3-who-are-you "…" --fact "…"`, ~5 parallel runs at a time — the
 200k tokens/min limit skews bigger batches).
 
+## Billing and access (Phase 4)
+
+**Model:** every learner gets a **7-day free trial with no card** (`profiles.trial_ends_at`, set at signup — the app, not Stripe, runs the
+trial). After it, talking with the buddy needs the **$9/month** plan. Constants live in `lib/plans.ts`.
+
+- **Who has access** is one pure function, `decideAccess` (`lib/billing.ts`): a live subscription (`active` / `trialing` / `past_due` —
+  past_due is a grace period while Stripe retries the card), a comp, or a running trial. Anything else is locked. It fails closed.
+- **What locks:** `/api/turn`, `/api/stt`, `/api/tts` and starting a session return **402** `{code: "subscription_required"}`.
+  **What stays open:** mistake review, memory, recaps, placement, billing, and account/data pages, so a lapsed learner can always
+  see, download and delete their data and has a reason to come back.
+- **Checkout/Portal** (`lib/checkout.ts`): hosted Stripe Checkout (`mode: subscription`) and the Customer Portal. The Stripe customer is
+  created and saved *before* payment, so every webhook can find the learner. Subscribing mid-trial starts billing immediately.
+- **Webhook** (`/api/stripe/webhook`, `lib/stripe-sync.ts`): verifies the signature on the raw body, then for `checkout.session.completed` and
+  `customer.subscription.created|updated|deleted` **re-reads the subscription from Stripe** and overwrites our row. Events can arrive
+  duplicated and out of order, so we never trust the event body: a stale "active" event can't resurrect a cancelled subscription.
+  Event ids are recorded only after success, so a failed attempt is retried by Stripe. (In current Stripe API versions the period end is on
+  the subscription *items*; `snapshotFromStripe` reads it there.)
+- **Comps** (the owner, testers): `npx tsx scripts/grant-access.ts <userId> [days]` — see below.
+
+### Billing setup (test mode)
+
+1. In Stripe (test mode): **Product catalog → Add product** "Jalees", recurring **$9.00 USD / month**; copy the **Price id** (`price_…`).
+2. **Settings → Billing → Customer portal**: activate it (allow cancelling and updating the card).
+3. Copy the secret key (`sk_test_…`) from **Developers → API keys**.
+4. Put `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `APP_URL=http://localhost:3000` in `web/.env.local`. Run `npm run check:stripe` — it should confirm the Price.
+5. For the webhook locally: install the [Stripe CLI](https://docs.stripe.com/stripe-cli), `stripe login`, then
+   `stripe listen --forward-to localhost:3000/api/stripe/webhook` and put the `whsec_…` it prints in `STRIPE_WEBHOOK_SECRET`. Restart `npm run dev`.
+6. In the app: **/learn/billing → Subscribe**, pay with Stripe's test card `4242 4242 4242 4242` (any future date, any CVC). Within seconds the page flips
+   to "Subscribed". Then **Manage billing → cancel**, and watch it end at the period end.
+
+In production: create the same product, price, portal **and webhook endpoint** (`https://YOUR-DOMAIN/api/stripe/webhook`, events above) in live
+mode, and use the live keys. `npm run check:launch` lists everything still outstanding.
+
+## Placement (Phase 4)
+
+`/learn/placement`: ten short English → Arabic prompts, two per lesson, escalating. Production, not recognition. Scored **deterministically**
+(`lib/placement.ts`): every required word slot must appear (diacritics, alef/hamza spelling, a leading ال and final ة/ه ignored; extra harmless words
+allowed; **word order is not checked**) and the existing gender-agreement detector must find no error. No model is involved, so a grade can't be
+hallucinated and the whole thing is unit-tested. It **stops at the first miss** (no spiral of questions the learner can't answer), shows no
+per-item right/wrong, and starts the learner at the lesson of the first miss. If they pass everything and no further lesson exists, it says so honestly
+("more lessons are on the way"). The server holds the attempt and chooses the next item; the client sends the question number so a double-click can
+never be scored against the next question. Add items to `content/placement.ts` when you add a lesson and it extends automatically.
+
+## Your data
+
+Everything about one learner can be downloaded (`/api/account/export`) or deleted (`/learn/account`) by the learner. Deletion cancels any Stripe
+subscription **first** (and refuses to proceed if that fails, so nobody is billed after deleting), removes every row in all 8 tables, then tries to close the
+sign-in account. Whether Neon Auth lets a user delete themselves is **unverified** (the SDK exposes `deleteUser`; the managed server may have it switched
+off): if it refuses, the learner is told their data is gone and that their sign-in account needs closing by us — in the Neon console under Auth → Users.
+Voice audio is never stored. Stripe keeps its own invoice records as the law requires.
+
+### Comping access
+
+```bash
+npx tsx scripts/grant-access.ts <email|userId> [days]   # no days = open-ended
+npx tsx scripts/grant-access.ts <email|userId> revoke
+```
+
+An email resolves through Neon Auth's user table; an unknown user is refused rather than silently comped. **The owner's own account** gets the 7-day trial
+like everyone else — comp yourself before it ends.
+
+## Pre-launch
+
+`npm run check:launch`. The legal pages (`/privacy`, `/terms`) are **drafts written from what the app really does — not legal advice**. They show a "Draft"
+banner and visible `[PLACEHOLDERS]` (company, contact email, governing law, refund policy in `src/lib/site.ts`) until a lawyer has reviewed them and
+`LEGAL_DRAFT` is set to false.
+
 ## Content
 
 `src/content/` is the source of truth (`lessons.ts`, `scenarios.ts`, `genders.ts`); `db:seed` mirrors it into the
@@ -126,7 +200,17 @@ page. To re-enable, re-run that comparison (`npm run try:turn -- b1l3-who-are-yo
 `src/content/lessons.ts` and `src/lib/vocab.ts` started as copies of `../phase0-eval/src/` — keep them in step or the
 Phase 0 eval stops testing what ships.
 
-## Known limitations (Phase 1)
+## Known limitations
+
+- **Content is Book 1, lessons 1-5 only** (the spec's target learner is Book 2-3). This is the biggest gap between the product and its pitch;
+  authoring further lessons (vocab, grammar, genders, scenarios, placement items) is the highest-value next step.
+- **Scripture is never generated**: the prompt forbids it and `lib/scripture.ts` strips any sentence that frames or points at the Qur'an or hadith.
+  Everyday expressions the course teaches (السلام عليكم, بسم الله, الحمد لله) are allowed as greetings. Real scripture, if ever added, must be
+  retrieval-only from a verified corpus.
+- **Neon Auth is beta** and its self-deletion path is unverified (see *Your data*). The Stripe webhook needs a public URL outside local testing.
+- **OpenAI limits**: the key reaches only `gpt-4o-mini`, `gpt-4o-mini-transcribe` and `gpt-4o-mini-tts`, with a 200,000 tokens/minute cap.
+  Each turn is 1-3 model calls; raise the limit before real traffic.
+- **Placement** is translation-prompt based, order-insensitive and covers lessons 1-5; a spoken free-conversation placement would need a model judge.
 
 - **Recasts are only guaranteed for demonstrative–noun gender** (the commonest beginner error), which the app checks
   itself: 30/30 deliberate errors were recast and 0/20 correct sentences were wrongly flagged against the live model.
