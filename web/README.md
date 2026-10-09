@@ -199,7 +199,7 @@ banner and visible `[PLACEHOLDERS]` (company, contact email, governing law, refu
 `src/content/` is the source of truth (`lessons.ts`, `scenarios.ts`, `genders.ts`, `placement.ts`); `db:seed` mirrors it into the
 `lessons`/`scenarios` tables so sessions can reference scenarios and content can be joined in analytics.
 
-The lesson tables follow **Madinah Book 1's own numbering** (lessons 1-10 authored; the book has 23). They record which words and
+The lesson tables follow **Madinah Book 1's own numbering** (all 23 lessons authored). They record which words and
 structures each lesson introduces — word lists and short grammar notes in our own words, never the book's sentences or exercises
 (product spec: align to lesson numbers only). Words the book shows only in drills or appendices count as not taught yet.
 Things the book does that shape the buddy:
@@ -209,8 +209,11 @@ Things the book does that shape the buddy:
   vocab checker (so أَذْهَبُ "I go" can't pass as أ + ذهب);
 - feminine **هَذِهِ is lesson 6 and تِلْكَ lesson 7**; feminine adjective forms (+ة) are allowed automatically from lesson 6 for every
   adjective in `newAdjectives`;
-- the prefix **ل** unlocks in lesson 6 and the possessive suffixes **ـي ـك ـه ـها** in lesson 10 (`newAffixes`) — before that the
-  checker will not match a word to its base through them.
+- the prefix **ل** unlocks in lesson 6, the possessive suffixes **ـي ـك ـه ـها** in 10, **ـهم ـهن** and the regular plurals **ـون ـات** in 13,
+  **ـنا ـكم** in 14, **ـكنّ** in 15, and the dual **ـان / ـتان** with the accusative ـا in 18 (`newAffixes`) — before that the
+  checker will not match a word to its base through them;
+- non-human plurals count as feminine singular for هذه / تلك from lesson 16 (so `هذا كتب` is recast to `هذه كتب`), and numbers 3-10 come
+  in both forms (with ـة for masculine nouns in 19, without for feminine nouns in 20).
 
 To add a lesson: extend `lessons.ts` (and `genders.ts`), add scenarios (`openingLine` must stay inside the lesson's vocabulary) and a
 placement item, run `npm run audio:openers`, `npm run db:seed`, then `check:lessons`, `check:content`, `check:placement`.
@@ -219,15 +222,17 @@ placement item, run `npm run audio:openers`, `npm run db:seed`, then `check:less
 
 ## Known limitations
 
-- **Content is Book 1, lessons 1-10 of 23** (the spec's target learner is Book 2-3). This is the biggest gap between the product and its pitch;
-  authoring Book 1 lessons 11-23 (vocab, grammar, genders, scenarios, placement items) and then Books 2-3 is the highest-value next step.
+- **Content is Book 1 (all 23 lessons) only** (the spec's target learner is Book 2-3). This is the biggest gap between the product and its pitch;
+  authoring Books 2-3 (vocab, grammar, genders, scenarios, placement items) is the highest-value next step.
+- **The vocab checker is a heuristic.** Verb forms are matched after dropping tashkeel (ذَهَبَتْ also admits ذَهَبْتُ / ذَهَبْتَ), and the
+  yes/no أَ is stripped from any word (أَحْمَرُ passes from lesson 16 as أ + حُمُر). Treat flagged and unflagged replies as signals, not proof.
 - **Scripture is never generated**: the prompt forbids it and `lib/scripture.ts` strips any sentence that frames or points at the Qur'an or hadith.
   Everyday expressions the course teaches (السلام عليكم, بسم الله, الحمد لله) are allowed as greetings. Real scripture, if ever added, must be
   retrieval-only from a verified corpus.
 - **Neon Auth is beta** and its self-deletion path is unverified (see *Your data*). The Stripe webhook needs a public URL outside local testing.
 - **OpenAI limits**: the key reaches only `gpt-4o-mini`, `gpt-4o-mini-transcribe` and `gpt-4o-mini-tts`, with a 200,000 tokens/minute cap.
   Each turn is 1-3 model calls; raise the limit before real traffic.
-- **Placement** is translation-prompt based, order-insensitive and covers lessons 1-10; a spoken free-conversation placement would need a model judge.
+- **Placement** is translation-prompt based, order-insensitive and covers lessons 1-23 with one or two items per lesson (a strong learner answers ~25 questions); a spoken free-conversation placement would need a model judge.
 
 - **Recasts are only guaranteed for demonstrative–noun gender** (the commonest beginner error), which the app checks
   itself: 30/30 deliberate errors were recast and 0/20 correct sentences were wrongly flagged against the live model.

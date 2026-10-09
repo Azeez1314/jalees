@@ -91,7 +91,7 @@ Isolation: every user-owned table is keyed by `user_id` and every query filters 
 
 ## Supporting flows
 
-**Placement** (`/api/placement/*`): twelve short English → Arabic production prompts, one or two per lesson, escalating; stops at the first miss and starts the learner at that lesson, writing `level_lesson` to the profile. **Scored deterministically** (word slots + the gender-agreement detector), not by an LLM — a deliberate change from the original design: it is free, can't hallucinate a grade, and is unit-testable. Covers Book 1 lessons 1–10 (one to two items per lesson).
+**Placement** (`/api/placement/*`): 25 short English → Arabic production prompts, one or two per lesson, escalating; stops at the first miss and starts the learner at that lesson, writing `level_lesson` to the profile. **Scored deterministically** (word slots + the gender-agreement detector), not by an LLM — a deliberate change from the original design: it is free, can't hallucinate a grade, and is unit-testable. Covers all 23 Book 1 lessons (one to two items per lesson, ~25 in all; a miss ends the test).
 
 **Session recap** (`/api/recap`): on session end, one LLM call over the session's turns + mistakes → recap card (patterns, not one-offs) + updates `memory_facts` (extract new personal facts) + schedules mistakes into spaced review (`review_due_at`: 1d/3d/7d/21d).
 
@@ -102,10 +102,10 @@ Isolation: every user-owned table is keyed by `user_id` and every query filters 
 ## Build order (each phase is shippable)
 
 - **Phase 0 — Constraint eval (no app).** Script that runs the LLM against 20 test conversations per lesson and flags vocabulary/grammar leaks above lesson N. If this fails, the product concept needs rework — test it before building anything. → [`phase0-eval/`](../phase0-eval)
-- **Phase 1 — Text conversation loop.** Auth, lessons/scenarios tables (hand-author Book 1, lessons 1–5 first; now 1–10), `/api/turn` text-only, recast + display. Usable product for testing pedagogy with 5–10 real learners.
+- **Phase 1 — Text conversation loop.** Auth, lessons/scenarios tables (hand-author Book 1; now all 23 lessons), `/api/turn` text-only, recast + display. Usable product for testing pedagogy with 5–10 real learners.
 - **Phase 2 — Voice.** MediaRecorder capture, STT/TTS behind interfaces, transcript confirmation UI, session cap.
 - **Phase 3 — Memory + recap + mistake review.** The retention layer. → built in `web/` (see its README, "Retention"). Recap patterns are deterministic with curated tips; buddy-side Arabic memory is OFF because measured leakage tripled (13% → 39%).
-- **Phase 4 — Placement + Stripe + polish.** Trial → subscription; landing page; creator-partnership launch. → built in `web/` (README: *Billing and access*, *Placement*, *Your data*, *Pre-launch*). Remaining before launch is in `npm run check:launch` — chiefly legal review, live Stripe, hosting, and **content beyond Book 1 lesson 10**.
+- **Phase 4 — Placement + Stripe + polish.** Trial → subscription; landing page; creator-partnership launch. → built in `web/` (README: *Billing and access*, *Placement*, *Your data*, *Pre-launch*). Remaining before launch is in `npm run check:launch` — chiefly legal review, live Stripe, hosting, and **content beyond Book 1 (Books 2–3)**.
 
 ## Top technical risks (watch continuously)
 

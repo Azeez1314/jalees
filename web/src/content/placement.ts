@@ -42,4 +42,30 @@ export const placementItems: PlacementItem[] = [
   { id: "p9a", lessonNo: 9, prompt: "I am a new student.", slots: [["أنا"], ["طالب", "طالبة"], ["جديد", "جديدة"]], example: "أَنَا طَالِبٌ جَدِيدٌ", wrong: ["هو طالب جديد", "أنا طالب", "طالب جديد"] },
   // Lesson 10 — possessive suffixes, ل / عند + pronoun
   { id: "p10a", lessonNo: 10, prompt: "I have a brother.", slots: [["لي", "عندي"], ["أخ"]], example: "لِي أَخٌ", wrong: ["لك أخ", "أخ", "لي"] },
+  // Lesson 11 — أحب, في + pronoun
+  { id: "p11a", lessonNo: 11, prompt: "I love my father and my mother.", slots: [["أحب"], ["أبي"], ["أمي"]], example: "أُحِبُّ أَبِي وَأُمِّي", wrong: ["أحب أبي", "أبي وأمي", "أحب أمي"] },
+  // Lesson 12 — she-verbs
+  { id: "p12a", lessonNo: 12, prompt: "Khadijah went to the hospital.", slots: [["ذهبت"], ["خديجة"], ["إلى"], ["مستشفى"]], example: "ذَهَبَتْ خَدِيجَةُ إِلَى الْمُسْتَشْفَى", wrong: ["ذهب خديجة إلى المستشفى", "ذهبت خديجة", "خديجة في المستشفى"] },
+  // Lesson 13 — plurals, هؤلاء
+  { id: "p13a", lessonNo: 13, prompt: "These students are new.", slots: [["هؤلاء"], ["طلاب"], ["جدد"]], example: "هَؤُلَاءِ طُلَّابٌ جُدُدٌ", wrong: ["هذا طلاب جدد", "هؤلاء طلاب", "هؤلاء طالب جديد"] },
+  // Lesson 14 — نحن
+  { id: "p14a", lessonNo: 14, prompt: "We are from Japan.", slots: [["نحن"], ["من"], ["يابان"]], example: "نَحْنُ مِنَ الْيَابَانِ", wrong: ["أنا من اليابان", "نحن في اليابان", "نحن"] },
+  // Lesson 15 — متى, past verbs
+  { id: "p15a", lessonNo: 15, prompt: "When did you (to one man) go?", slots: [["متى"], ["ذهبت"]], example: "مَتَى ذَهَبْتَ؟", wrong: ["متى", "ذهبت", "أين ذهبت"] },
+  // Lesson 16 — plural things
+  { id: "p16a", lessonNo: 16, prompt: "These books are new.", slots: [["هذه"], ["كتب"], ["جديدة"]], example: "هَذِهِ كُتُبٌ جَدِيدَةٌ", wrong: ["هذا كتب جديدة", "هذه كتب جديد", "هذه كتب"] },
+  // Lesson 17 — plurals with idafa
+  { id: "p17a", lessonNo: 17, prompt: "The doors of the mosque are open.", slots: [["أبواب"], ["مسجد"], ["مفتوحة"]], example: "أَبْوَابُ الْمَسْجِدِ مَفْتُوحَةٌ", wrong: ["أبواب المسجد مفتوح", "أبواب مفتوحة", "الباب المسجد مفتوحة"] },
+  // Lesson 18 — dual
+  { id: "p18a", lessonNo: 18, prompt: "I have two sisters.", slots: [["لي", "عندي"], ["أختان"]], example: "لِي أُخْتَانِ", wrong: ["لي أخت", "لي أخوات", "أختان"] },
+  // Lesson 19 — numbers 3-10
+  { id: "p19a", lessonNo: 19, prompt: "I have five books.", slots: [["عندي", "لي"], ["خمسة"], ["كتب"]], example: "عِنْدِي خَمْسَةُ كُتُبٍ", wrong: ["عندي كتب", "عندي خمس كتب", "خمسة كتب"] },
+  // Lesson 20 — numbers with feminine nouns
+  { id: "p20a", lessonNo: 20, prompt: "I have three sisters.", slots: [["لي", "عندي"], ["ثلاث"], ["أخوات"]], example: "لِي ثَلَاثُ أَخَوَاتٍ", wrong: ["لي ثلاثة أخوات", "لي أخوات", "ثلاث أخوات"] },
+  // Lesson 21 — ولكن
+  { id: "p21a", lessonNo: 21, prompt: "The school is big, but the classroom is small.", slots: [["مدرسة"], ["كبيرة"], ["لكن"], ["فصل"], ["صغير"]], example: "الْمَدْرَسَةُ كَبِيرَةٌ وَلَكِنَّ الْفَصْلَ صَغِيرٌ", wrong: ["المدرسة كبيرة والفصل صغير", "المدرسة كبير ولكن الفصل صغير", "ولكن الفصل صغير"] },
+  // Lesson 22 — colours
+  { id: "p22a", lessonNo: 22, prompt: "I have a red pen.", slots: [["عندي", "لي"], ["قلم"], ["أحمر"]], example: "عِنْدِي قَلَمٌ أَحْمَرُ", wrong: ["عندي قلم أزرق", "عندي أحمر", "قلم أحمر"] },
+  // Lesson 23 — names, places
+  { id: "p23a", lessonNo: 23, prompt: "Ahmad went to Makkah.", slots: [["ذهب"], ["أحمد"], ["إلى"], ["مكة"]], example: "ذَهَبَ أَحْمَدُ إِلَى مَكَّةَ", wrong: ["أحمد في مكة", "ذهب أحمد", "ذهب إلى مكة"] },
 ];

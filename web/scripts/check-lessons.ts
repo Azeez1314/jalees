@@ -77,9 +77,44 @@ no("أَنَا طَالِبٌ", 3, "أنا before lesson 4");
 ok("السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ", 1, "the greeting at lesson 1".replace("allows", ""));
 ok("مُمْتَازٌ! جَيِّدَةٌ! مَا شَاءَ اللَّهُ", 1, "praise from lesson 1");
 
+
+// ---- lessons 11-23 -----------------------------------------------------------------------------------------------
+no("أُحِبُّ أَبِي", 10, "أحب before lesson 11");
+ok("أُحِبُّ أَبِي وَأُمِّي. فِيهَا نَافِذَةٌ. مَاذَا فِيهِ؟", 11);
+no("ذَهَبَتْ فَاطِمَةُ", 11, "ذهبت (she went) before lesson 12");
+ok("ذَهَبَتْ فَاطِمَةُ إِلَى الْمُسْتَشْفَى. كَيْفَ حَالُكَ؟ الْفَتَاةُ الَّتِي مَعَكَ", 12);
+no("ذَهَبُوا إِلَى الْمَطْعَمِ", 12, "ذهبوا before lesson 13");
+ok("الطُّلَّابُ ذَهَبُوا إِلَى الْمَطْعَمِ. هَؤُلَاءِ مُدَرِّسُونَ وَمُدَرِّسَاتٌ. أَبْنَاؤُهُمْ. أَبْنَائِي", 13);
+no("هَؤُلَاءِ مُدَرِّسُونَ", 12, "a regular masculine plural before lesson 13");
+no("بَيْتُهُمْ", 12, "ـهم before lesson 13");
+no("بَيْتُنَا", 13, "ـنا before lesson 14");
+ok("بَيْتُنَا. بَيْتُكُمْ. غُرْفَتُنَا. نَحْنُ مِنَ الْيَابَانِ. أَذَهَبْتُمْ؟ ذَهَبْنَا. أَيُّ يَوْمٍ هَذَا؟", 14);
+no("أَذْهَبُ", 14, "أَذْهَبُ ('I go', present) even with the أ trick");
+ok("أَذَهَبْتُمْ إِلَى الْمَسْجِدِ؟", 14, "a yes/no question with أ + a listed past form");
+no("بَيْتُكُنَّ", 14, "ـكنّ before lesson 15");
+ok("مَتَى ذَهَبْتُ؟ رَجَعْنَا قَبْلَ أُسْبُوعٍ. أَنْتُنَّ. بَيْتُكُنَّ", 15);
+no("هَذِهِ كُتُبٌ جَدِيدَةٌ", 15, "كتب before lesson 16");
+ok("هَذِهِ كُتُبٌ جَدِيدَةٌ. السَّيَّارَاتُ كَبِيرَةٌ. الْأَبْوَابُ مَفْتُوحَةٌ", 16);
+no("كِتَابَانِ", 17, "a dual before lesson 18");
+no("كَمْ أَخًا لَكَ؟", 17, "كم before lesson 18");
+ok("كَمْ أَخًا لَكَ؟ كِتَابَانِ. نَافِذَتَانِ. هَذَانِ الطَّالِبَانِ. هَاتَانِ. أُخْتَانِ. عَيْنَانِ", 18);
+no("ثَلَاثَةُ كُتُبٍ", 18, "numbers 3-10 before lesson 19");
+ok("ثَلَاثَةُ كُتُبٍ. خَمْسَةُ أَقْلَامٍ. كَمْ ثَمَنُ هَذَا الْكِتَابِ؟ سَبْعَةُ رِيَالَاتٍ", 19);
+no("ثَلَاثُ سَيَّارَاتٍ", 19, "the feminine number forms before lesson 20");
+ok("ثَلَاثُ سَيَّارَاتٍ. ثَمَانِي مُدَرِّسَاتٍ. عَشْرُ حَافِلَاتٍ", 20);
+no("ذَاكَ", 20, "ذاك before lesson 21");
+ok("ذَاكَ الْمَكْتَبُ كَبِيرٌ وَلَكِنَّ الْكُرْسِيَّ صَغِيرٌ. أَمُغْلَقَةٌ أَمْ مَفْتُوحَةٌ؟ نُحِبُّهُ كَثِيرًا", 21);
+no("قَلَمٌ أَزْرَقُ", 21, "colours before lesson 22");
+ok("قَلَمٌ أَحْمَرُ وَمِنْدِيلٌ أَبْيَضُ. قَالَ يُوسُفُ. قَالَتْ فَاطِمَةُ. مَنَادِيلُ", 22);
+no("هَاتِ يَا أُسْتَاذُ", 22, "هات before lesson 23");
+ok("هَاتِ يَا أُسْتَاذُ. ذَهَبَ أَحْمَدُ إِلَى مَكَّةَ", 23);
+check(cumulativeVerbs(11).includes("أُحِبُّ") && cumulativeVerbs(23).length === lessons.flatMap((l) => l.newVerbs ?? []).length, "cumulativeVerbs follows the later lessons too");
+check(buildBuddySystemPrompt(14, "g").includes("so no ") && !/so no [^)]*ذَهَبْنَا/.test(buildBuddySystemPrompt(14, "g")), "the prompt's 'do not change the form' examples exclude forms that ARE allowed");
+check(buildBuddySystemPrompt(16, "g").includes("هَذِهِ كُتُبٌ جَدِيدَةٌ") && buildBuddySystemPrompt(18, "g").includes("هَذَانِ"), "later lessons add plural and dual agreement rules to the prompt");
+
 // ---- gender tables ---------------------------------------------------------------------------------------------
 const key = (w: string) => normalizeArabic(w).replace(/^ال(?=.)/, "");
-for (const upto of [1, 5, 10]) {
+for (const upto of [1, 5, 10, 16, 23]) {
   const g = cumulativeGenders(upto);
   const m = new Set(g.masculine.map(key));
   const f = g.feminine.map(key);

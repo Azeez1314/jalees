@@ -1,5 +1,5 @@
 import { cumulativeGenders } from "@/content/genders";
-import { FAR_FEMININE_FROM, FEMININE_FROM, cumulativeGrammar, cumulativeVerbs, cumulativeVocab, praisePhrases } from "@/content/lessons";
+import { FAR_FEMININE_FROM, FEMININE_FROM, cumulativeGrammar, cumulativeVerbs, cumulativeVocab, normalizeArabic, praisePhrases } from "@/content/lessons";
 
 export const ERROR_TYPES = [
   "gender_agreement",
@@ -38,7 +38,7 @@ HARD CONSTRAINT: the learner has only studied through Lesson ${lessonNo}. You MU
 
 ${
   verbs.length
-    ? `VERBS: you may use ONLY these exact verb forms: ${verbs.join("، ")} — each only in the form shown (he, past tense). Do not change the person, number or tense (so no ذَهَبْتُ, ذَهَبَتْ, ذَهَبُوا, يَذْهَبُ, اذْهَبْ), and do not use ANY other verb, even a polite or common one: أُرِيدُ, تُرِيدُ, أَعْطِنِي, تَفَضَّلْ, آخُذُ, يُمْكِنُ, أَسْتَطِيعُ, كَانَ. A "verb" is any word that changes form depending on who does the action. Before you finalize your reply, reread it: if a word like that is not exactly one of the verb forms above, delete that sentence and say it as a plain noun sentence or a short question with the allowed words instead. It is fine to leave a request unanswered if answering would need a forbidden verb.
+    ? `VERBS: you may use ONLY these exact verb forms: ${verbs.join("، ")} — spelled exactly like that. Do not change the person, number or tense of anything (${forbiddenVerbExamples(verbs)}), and do not use ANY other verb, even a polite or common one: أُرِيدُ, تُرِيدُ, أَعْطِنِي, تَفَضَّلْ, آخُذُ, يُمْكِنُ, أَسْتَطِيعُ, كَانَ. A "verb" is any word that changes form depending on who does the action. Before you finalize your reply, reread it: if a word like that is not exactly one of the verb forms above, delete that sentence and say it as a plain noun sentence or a short question with the allowed words instead. It is fine to leave a request unanswered if answering would need a forbidden verb.
 `
     : `VERBS ARE COMPLETELY FORBIDDEN AT THIS LESSON — this is the single most common mistake, watch for it specifically. A "verb" is any word that changes form depending on who is doing the action (أنا/أنتَ/أنتِ/هو/هي) — for example أُرِيدُ/تُرِيدُ/يُرِيدُ (want), آخُذُ/تَأْخُذُ/يَأْخُذُ (take), أَسْتَعِيرُ/تَسْتَعِيرُ/يَسْتَعِيرُ (borrow), يُمْكِنُ (is possible), ذَهَبَ (went), جَلَسَ (sat), أَعْطِنِي (give me). None of these — or ANY word built the same way — may appear in your reply, even disguised as a polite question or offer. Before you finalize your reply, reread it and check: does any word change if I swap who's doing it? If yes, delete that whole sentence and replace it with a plain noun sentence using only the allowed vocabulary above, or a short question using only the question words in the allowed vocabulary. It is completely fine — expected, even — to leave the learner's request (e.g. "can I borrow this?") without a real answer if answering it truthfully would require a verb. Restate a fact or ask a simple allowed question instead.
 
@@ -116,5 +116,16 @@ function agreementRules(lessonNo: number): string {
   }
   if (lessonNo >= 2) rules.push("The only word for far-masculine 'that' is ذَلِكَ — never use ذَاكَ.");
   if (lessonNo >= 4) rules.push("هو refers to masculine, هي to feminine.");
+  if (lessonNo >= 13) rules.push("For several PEOPLE use هَؤُلَاءِ (near) / أُولَئِكَ (far), هُمْ (masculine) / هُنَّ (feminine), with plural adjectives.");
+  if (lessonNo >= 16) rules.push("For several THINGS use هَذِهِ / تِلْكَ and the feminine singular for adjectives and هِيَ (not هُمْ): هَذِهِ كُتُبٌ جَدِيدَةٌ.");
+  if (lessonNo >= 18) rules.push("For exactly two use the dual: هَذَانِ (masculine) / هَاتَانِ (feminine), nouns ending ـانِ / ـتَانِ.");
+  if (lessonNo >= 19) rules.push("Counting 3-10: the number takes ـة with a masculine counted noun and not with a feminine one (ثَلَاثَةُ كُتُبٍ, ثَلَاثُ سَيَّارَاتٍ).");
   return "Agreement rules: " + rules.join(" ");
+}
+
+/** A few verb forms that look like the allowed ones but are not, for the "do not change the person or tense" instruction. */
+function forbiddenVerbExamples(allowed: string[]): string {
+  const taught = new Set(allowed.map(normalizeArabic));
+  const candidates = ["ذَهَبْتُ", "ذَهَبَتْ", "ذَهَبُوا", "ذَهَبْنَا", "يَذْهَبُ", "تَذْهَبُ", "اذْهَبْ", "يَخْرُجُ", "يَجْلِسُ"];
+  return "so no " + candidates.filter((c) => !taught.has(normalizeArabic(c))).slice(0, 5).join(", ");
 }

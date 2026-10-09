@@ -43,6 +43,13 @@ const two = detectAgreementError("هذا بيت. هذه قلم جميل", 3);
 check(two?.original === "هذه قلم جميل", "quotes only the sentence with the error", JSON.stringify(two));
 check(Boolean(two?.corrected.startsWith("هَذَا") && two.corrected.endsWith("قلم جميل")), "swaps only the demonstrative", JSON.stringify(two));
 
+// --- plurals of things count as feminine singular (lesson 16) ---
+expectFix("masculine demonstrative + plural of things", "هذا كتب", 16, "هذه كتب");
+expectFix("far masculine demonstrative + plural of things", "ذلك كتب", 16, "تلك كتب");
+expectNone("agreeing: هذه + plural of things", "هذه كتب", 16);
+expectNone("a plural of things is not judged before lesson 16", "هذا كتب", 15);
+expectNone("a plural of people is not judged (it takes هؤلاء)", "هذه طلاب", 16);
+
 // --- must NOT fire ---
 expectNone("never corrects into a feminine demonstrative before it is taught (lesson 5)", "هذا بنت", 5);
 expectNone("never corrects into تلك before lesson 7", "ذلك سيارة", 6);

@@ -62,13 +62,15 @@ check(placeLearner(missAtId("p2a")).lesson === 2, "passes L1, misses L2 → less
 check(placeLearner(missAtId("p4b")).lesson === 4, "passes L4's first item, misses its second → lesson 4");
 check(placeLearner(missAtId("p6a")).lesson === 6, "passes through L5, misses L6 → lesson 6");
 check(placeLearner(missAtId("p10a")).lesson === 10, "passes through L9, misses L10 → lesson 10");
+check(placeLearner(missAtId("p13a")).lesson === 13, "passes through L12, misses L13 → lesson 13");
+check(placeLearner(missAtId("p19a")).lesson === 19, "passes through L18, misses L19 → lesson 19");
 const top = maxContentLesson();
 const all = placeLearner(placementItems.map(pass));
 check(all.lesson === top && all.beyondContent, `passes everything → lesson ${top} and 'beyond content' (nothing further exists yet)`, JSON.stringify(all));
 // extends automatically: if the content grew a lesson with no placement items yet, a perfect score starts there, not 'beyond'.
 const grown = placeLearner(placementItems.map(pass), placementItems, top + 1);
 check(grown.lesson === top + 1 && !grown.beyondContent, `if content has a lesson ${top + 1}, a perfect score starts there (not 'beyond content')`, JSON.stringify(grown));
-check(top === 10, "content currently ends at lesson 10");
+check(top === 23, "content covers all 23 lessons of Book 1");
 
 async function db() {
   if (!process.env.DATABASE_URL) {
