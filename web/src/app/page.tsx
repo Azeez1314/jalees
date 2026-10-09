@@ -19,16 +19,16 @@ const FEATURES = [
   { title: "It remembers", body: "A mistake list that comes back after 1, 3, 7 and 21 days, a daily streak, and notes about you that you control." },
 ];
 
+const lastLesson = Math.max(...lessons.map((l) => l.lessonNo));
+
 const FAQ = [
   { q: "Who is it for?", a: "Learners following the Madinah books on their own who can read and follow along but freeze when they have to speak — and have nobody to practise with." },
-  { q: "Which lessons does it cover?", a: "Madinah Book 1, lessons 1–5, today. It's a small start and we add lessons over time. The placement test tells you where you fit, and says so honestly if you're ahead of what's available." },
+  { q: "Which lessons does it cover?", a: `Madinah Book 1, lessons 1–${lastLesson}, today (the book has 23). We add lessons over time. The placement test tells you where you fit, and says so honestly if you're ahead of what's available.` },
   { q: "Does it teach Qur'an?", a: "No. It practises everyday Fus'ha conversation within your lesson. The buddy never quotes the Qur'an or hadith and doesn't give religious rulings." },
   { q: "Is my voice recorded?", a: "Not by us. Your audio is turned into text for the conversation and we keep only that text. See the privacy page for who processes it." },
   { q: "Can the buddy be wrong?", a: "Yes — it's an AI. It's a practice partner, not a certified teacher, so trust your books and teachers first. If something looks off, that's worth noting rather than memorising." },
   { q: "What happens after the free trial?", a: `Talking with the buddy needs the ${PRICE_LABEL} plan. Reviewing your mistakes, your notes and your data stay open either way. Cancel any time.` },
 ];
-
-const lastLesson = Math.max(...lessons.map((l) => l.lessonNo));
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   if (await getUser()) redirect("/learn");

@@ -21,7 +21,7 @@ const buddy = (recast: { original: string; corrected: string; errorType: "gender
 
 async function seed(db: ReturnType<typeof sql>, user: string, marker: string) {
   await db`INSERT INTO profiles (user_id, display_name) VALUES (${user}, ${"Name " + marker})`;
-  const [s] = await db`INSERT INTO sessions (user_id, scenario_id) VALUES (${user}, 'b1l1-around-the-house') RETURNING id`;
+  const [s] = await db`INSERT INTO sessions (user_id, scenario_id) VALUES (${user}, 'b1l1-what-is-this') RETURNING id`;
   await saveExchange(user, s.id, `هذه كتاب ${marker}`, { asrText: `هذه كتاب ${marker}`, seconds: 2 }, buddy({ original: `هذه كتاب ${marker}`, corrected: "هَذَا كِتَابٌ", errorType: "gender_agreement" }));
   await addFact(user, `Fact about ${marker}`, "learner");
   await addUsage(user, { stt: 5, tts: 7 });

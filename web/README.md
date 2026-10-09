@@ -38,6 +38,7 @@ restates mistakes correctly ("recast"), and shows replies fully diacritized with
 | `npm run check:stripe` | **Stripe test mode only** (refuses live keys): your Price is $9 USD monthly, and a real Checkout Session and Portal session can be created. No payment is made |
 | `npm run check:launch` | Pre-launch checklist: fails while placeholders, draft legal pages, test-mode Stripe or a localhost APP_URL remain |
 | `npm run metrics` | The spec's launch metrics (activation, engagement, D7/D30, trial→paid, cost per learner-day), aggregates only |
+| `npm run check:lessons` | Offline checks on the lesson tables: verb/affix/feminine gating, gender tables, the prompt follows the lesson |
 | `npm run check:content` | Fails if any scenario opener uses vocab above its lesson (run after editing content) |
 | `npm run check:recast` | Unit checks for the generic recast safety validator (no network) |
 | `npm run check:agreement` | Unit checks for the demonstrative–noun gender detector (no network) |
@@ -55,10 +56,10 @@ restates mistakes correctly ("recast"), and shows replies fully diacritized with
 ## How a turn works (`POST /api/turn`)
 
 1. Auth (Neon Auth session) → 401 if missing; the session must belong to the user.
-2. `lib/prompt.ts` builds the system prompt: persona, **hard lesson constraints** (allowed vocab + grammar, verb ban),
+2. `lib/prompt.ts` builds the system prompt: persona, **hard lesson constraints** (allowed vocab + grammar, exact allowed verb forms, أ-style yes/no questions),
    noun-gender table, scenario goal, recent mistakes, recast rules.
 3. **Agreement check first** — `lib/agreement.ts` looks for a demonstrative next to a noun from the gender table
-   (هذا/ذلك + masculine, هذه/تلك + feminine; handles ال, a fused و/ف, and possessive suffixes from lesson 5). If the
+   (هذا/ذلك + masculine, هذه/تلك + feminine; handles ال, a fused و/ف, and possessive suffixes from lesson 10). If the
    learner mismatched them, *the app* decides there is an error and what the fix is, and tells the model the exact
    corrected sentence. The model is only asked to restate it.
 4. `lib/turn.ts` calls the model, then applies guard rails to the draft:
@@ -195,22 +196,38 @@ banner and visible `[PLACEHOLDERS]` (company, contact email, governing law, refu
 
 ## Content
 
-`src/content/` is the source of truth (`lessons.ts`, `scenarios.ts`, `genders.ts`); `db:seed` mirrors it into the
+`src/content/` is the source of truth (`lessons.ts`, `scenarios.ts`, `genders.ts`, `placement.ts`); `db:seed` mirrors it into the
 `lessons`/`scenarios` tables so sessions can reference scenarios and content can be joined in analytics.
-`src/content/lessons.ts` and `src/lib/vocab.ts` started as copies of `../phase0-eval/src/` — keep them in step or the
-Phase 0 eval stops testing what ships.
+
+The lesson tables follow **Madinah Book 1's own numbering** (lessons 1-10 authored; the book has 23). They record which words and
+structures each lesson introduces — word lists and short grammar notes in our own words, never the book's sentences or exercises
+(product spec: align to lesson numbers only). Words the book shows only in drills or appendices count as not taught yet.
+Things the book does that shape the buddy:
+
+- yes/no questions use the interrogative **أَ** on the first word (not هَلْ), and the prompt says so;
+- **verbs are vocabulary from lesson 4** (`newVerbs`: ذَهَبَ, خَرَجَ; جَلَسَ in 8) — exact he-form past tense only, matched exactly by the
+  vocab checker (so أَذْهَبُ "I go" can't pass as أ + ذهب);
+- feminine **هَذِهِ is lesson 6 and تِلْكَ lesson 7**; feminine adjective forms (+ة) are allowed automatically from lesson 6 for every
+  adjective in `newAdjectives`;
+- the prefix **ل** unlocks in lesson 6 and the possessive suffixes **ـي ـك ـه ـها** in lesson 10 (`newAffixes`) — before that the
+  checker will not match a word to its base through them.
+
+To add a lesson: extend `lessons.ts` (and `genders.ts`), add scenarios (`openingLine` must stay inside the lesson's vocabulary) and a
+placement item, run `npm run audio:openers`, `npm run db:seed`, then `check:lessons`, `check:content`, `check:placement`.
+
+`../phase0-eval` is the frozen Phase 0 prototype (its own tokenizer and prompts); only its `lessons.ts` data is kept in step.
 
 ## Known limitations
 
-- **Content is Book 1, lessons 1-5 only** (the spec's target learner is Book 2-3). This is the biggest gap between the product and its pitch;
-  authoring further lessons (vocab, grammar, genders, scenarios, placement items) is the highest-value next step.
+- **Content is Book 1, lessons 1-10 of 23** (the spec's target learner is Book 2-3). This is the biggest gap between the product and its pitch;
+  authoring Book 1 lessons 11-23 (vocab, grammar, genders, scenarios, placement items) and then Books 2-3 is the highest-value next step.
 - **Scripture is never generated**: the prompt forbids it and `lib/scripture.ts` strips any sentence that frames or points at the Qur'an or hadith.
   Everyday expressions the course teaches (السلام عليكم, بسم الله, الحمد لله) are allowed as greetings. Real scripture, if ever added, must be
   retrieval-only from a verified corpus.
 - **Neon Auth is beta** and its self-deletion path is unverified (see *Your data*). The Stripe webhook needs a public URL outside local testing.
 - **OpenAI limits**: the key reaches only `gpt-4o-mini`, `gpt-4o-mini-transcribe` and `gpt-4o-mini-tts`, with a 200,000 tokens/minute cap.
   Each turn is 1-3 model calls; raise the limit before real traffic.
-- **Placement** is translation-prompt based, order-insensitive and covers lessons 1-5; a spoken free-conversation placement would need a model judge.
+- **Placement** is translation-prompt based, order-insensitive and covers lessons 1-10; a spoken free-conversation placement would need a model judge.
 
 - **Recasts are only guaranteed for demonstrative–noun gender** (the commonest beginner error), which the app checks
   itself: 30/30 deliberate errors were recast and 0/20 correct sentences were wrongly flagged against the live model.

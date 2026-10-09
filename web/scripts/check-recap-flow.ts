@@ -24,7 +24,7 @@ async function main() {
   const user = `test-recapflow-${Math.random().toString(36).slice(2)}`;
   const made: string[] = [];
   const mkSession = async () => {
-    const [s] = await db`INSERT INTO sessions (user_id, scenario_id) VALUES (${user}, 'b1l1-around-the-house') RETURNING id, scenario_id, started_at`;
+    const [s] = await db`INSERT INTO sessions (user_id, scenario_id) VALUES (${user}, 'b1l1-what-is-this') RETURNING id, scenario_id, started_at`;
     made.push(s.id);
     return { id: s.id as string, userId: user, scenarioId: s.scenario_id as string, startedAt: s.started_at as string };
   };

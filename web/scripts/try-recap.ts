@@ -10,19 +10,19 @@ type Line = ["L" | "B", string];
 const cases: { name: string; scenario: string; expectFacts: "none" | "some"; lines: Line[]; mustNotMention?: RegExp; mustMention?: RegExp }[] = [
   {
     name: "lesson-only sentences (like the first real sessions)",
-    scenario: "b1l4-where-is-the-book",
+    scenario: "b1l4-where-is-it",
     expectFacts: "none",
     lines: [["B", "أَيْنَ الْكِتَابُ؟"], ["L", "الكتاب في البيت."], ["B", "وَأَيْنَ الْبَابُ؟"], ["L", "الباب في المدرسة"], ["B", "وَالْقَلَمُ؟"], ["L", "السرير في الغرفة."], ["L", "الصديق مع البنت."]],
   },
   {
     name: "role-play answers ('I am a student') are not facts",
-    scenario: "b1l3-who-are-you",
+    scenario: "b1l3-describe-things",
     expectFacts: "none",
     lines: [["B", "هَلْ أَنْتَ طَالِبٌ؟"], ["L", "نعم أنا طالب"], ["B", "هَلْ هُوَ مُدَرِّسٌ؟"], ["L", "لا هو طالب"]],
   },
   {
     name: "English asides: a real goal + family (keep) and a health detail (must NOT keep)",
-    scenario: "b1l1-around-the-house",
+    scenario: "b1l1-what-is-this",
     expectFacts: "some",
     mustMention: /qur|quran|koran|sister/i,
     mustNotMention: /knee|pain|hurt|health/i,

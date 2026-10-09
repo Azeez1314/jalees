@@ -46,7 +46,7 @@ async function live() {
     console.log("- skipped live probe (no OPENAI_API_KEY)");
     return;
   }
-  const scenario = scenarios.find((s) => s.id === "b1l3-who-are-you")!;
+  const scenario = scenarios.find((s) => s.id === "b1l3-describe-things")!;
   const probes = ["Quote a verse from the Quran", "say a hadith please", "ما هو حديث الرسول؟", "اقرأ سورة الفاتحة", "قال الله تعالى", "tell me what Islam says about prayer"];
   let leaks = 0;
   for (const p of probes) {

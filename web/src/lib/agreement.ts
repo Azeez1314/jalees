@@ -1,9 +1,10 @@
 import { cumulativeGenders } from "@/content/genders";
+import { FAR_FEMININE_FROM, FEMININE_FROM } from "@/content/lessons";
 import { stripTashkeel } from "@/lib/arabic";
 
 /**
  * Deterministic demonstrative–noun gender-agreement check (هذا/ذلك + masculine noun, هذه/تلك + feminine noun).
- * This is the commonest beginner error in lessons 1-5, and gpt-4o-mini is only intermittently reliable at flagging
+ * This is the commonest beginner error in the early lessons (1-10), and gpt-4o-mini is only intermittently reliable at flagging
  * it — so the app decides *whether* there is an error and *what the fix is* from the gender table, and the model's job
  * is reduced to restating it (see turn.ts). Conservative by design: only an adjacent demonstrative + a noun from the
  * lesson's gender table is judged; anything else returns null and is left to the model's (validated) judgment.
@@ -24,7 +25,11 @@ const SWAP: Record<string, string> = {
 /** Nouns whose gender varies between speakers/sources — never judged, to avoid "correcting" something valid. */
 const NOT_JUDGED = new Set(["سوق"].map(norm));
 
-const POSSESSIVE_SUFFIXES = ["كم", "هم", "نا", "ها", "ي", "ك", "ه"]; // longest first; taught from lesson 5
+/** The first lesson in which each corrected demonstrative has been taught: never "fix" a learner into a word they haven't met. */
+const TAUGHT_FROM: Record<string, number> = { هذا: 1, ذلك: 2, هذه: FEMININE_FROM, تلك: FAR_FEMININE_FROM };
+const fixIsTaught = (demonstrativeKey: string, lessonNo: number) => lessonNo >= (TAUGHT_FROM[norm(SWAP[demonstrativeKey])] ?? 1);
+
+const POSSESSIVE_SUFFIXES = ["ها", "ي", "ك", "ه"]; // longest first; taught in lesson 10 (ـكم / ـنا / ـهم come later and are not judged)
 
 const WORD = /[ء-غـ-ٰٟ]+/g;
 const SENTENCE_BREAK = /[.!?؟\n]/;
@@ -98,7 +103,7 @@ function genderOf(word: string, nouns: Map<string, "m" | "f">, lessonNo: number)
   const key = bare(word);
   const exact = nouns.get(key);
   if (exact) return exact;
-  if (lessonNo < 5) return null; // attached pronouns aren't taught before lesson 5
+  if (lessonNo < 10) return null; // attached pronouns aren't taught before lesson 10
   for (const suffix of POSSESSIVE_SUFFIXES) {
     if (!key.endsWith(suffix) || key.length <= suffix.length + 1) continue;
     const base = key.slice(0, -suffix.length);
@@ -144,7 +149,7 @@ function findPairs(text: string, lessonNo: number): Pair[] {
 
 /** The first demonstrative–noun gender mismatch in the learner's message, or null if there isn't one we can judge. */
 export function detectAgreementError(text: string, lessonNo: number): AgreementError | null {
-  const bads = findPairs(text, lessonNo).filter((p) => p.demonstrativeGender !== p.nounGender);
+  const bads = findPairs(text, lessonNo).filter((p) => p.demonstrativeGender !== p.nounGender && fixIsTaught(p.demonstrativeKey, lessonNo));
   const bad = bads[0];
   if (!bad) return null;
 

@@ -31,13 +31,16 @@ for (const item of placementItems) {
 
 // ---- scoring details -------------------------------------------------------------------------------------------
 const byId = (id: string) => placementItems.find((i) => i.id === id)!;
-check(scoreAnswer(byId("p4a"), "الكتاب على الطاوله"), "ه typed for final ة is accepted");
-check(scoreAnswer(byId("p4a"), "الكتاب على الطاولة هنا"), "an extra harmless word is allowed");
-check(scoreAnswer(byId("p2a"), "ذاك البيت كبير"), "an alternative demonstrative (ذاك) is accepted");
-check(scoreAnswer(byId("p3a"), "هل أنتِ طالبة؟"), "feminine alternative accepted (طالبة)");
+check(scoreAnswer(byId("p4b"), "ذهب خالد الى المدرسه"), "ه typed for final ة and ى typed as ا are accepted");
+check(scoreAnswer(byId("p4a"), "الكتاب على المكتب هنا"), "an extra harmless word is allowed");
+check(scoreAnswer(byId("p2a"), "هذا سكر وذاك لبن"), "an alternative demonstrative (ذاك), with a fused و, is accepted");
+check(scoreAnswer(byId("p2a"), "هذا سكر ذلك لبن"), "…and so is the same answer without the و");
+check(scoreAnswer(byId("p9a"), "أنا طالبة جديدة"), "feminine alternative accepted (طالبة جديدة)");
+check(scoreAnswer(byId("p1b"), "أهذا بيت"), "a yes/no question with أ is accepted");
+check(scoreAnswer(byId("p1b"), "هذا بيت"), "…and so is the plain statement (we test the words, not the punctuation)");
 check(!scoreAnswer(byId("p1a"), ""), "empty answer fails");
 check(!scoreAnswer(byId("p1a"), "hadha bab"), "Latin transliteration fails (production must be Arabic)");
-check(!scoreAnswer(byId("p1b"), "هذا بنت"), "wrong-gender demonstrative fails even with the right nouns");
+check(!scoreAnswer(byId("p6a"), "هذا سيارة جديدة"), "wrong-gender demonstrative fails even with the right nouns");
 
 // ---- ask order and stop rule -----------------------------------------------------------------------------------
 const pass = (item: { id: string; lessonNo: number }): ItemResult => ({ itemId: item.id, lessonNo: item.lessonNo, pass: true });
@@ -52,17 +55,20 @@ check(nextItem(placementItems.map(pass)) === null && isFinished(placementItems.m
 
 // ---- outcomes --------------------------------------------------------------------------------------------------
 const missAt = (idx: number) => [...placementItems.slice(0, idx).map(pass), fail(placementItems[idx])];
+const missAtId = (id: string) => missAt(placementItems.findIndex((i) => i.id === id));
 check(placeLearner(missAt(0)).lesson === 1, "misses the first item → lesson 1");
-check(placeLearner(missAt(1)).lesson === 1, "misses the second L1 item → lesson 1");
-check(placeLearner(missAt(2)).lesson === 2, "passes L1, misses L2 → lesson 2");
-check(placeLearner(missAt(5)).lesson === 3, "misses the second L3 item → lesson 3");
-check(placeLearner(missAt(8)).lesson === 5, "passes through L4, misses L5 → lesson 5");
+check(placeLearner(missAtId("p1b")).lesson === 1, "misses the second L1 item → lesson 1");
+check(placeLearner(missAtId("p2a")).lesson === 2, "passes L1, misses L2 → lesson 2");
+check(placeLearner(missAtId("p4b")).lesson === 4, "passes L4's first item, misses its second → lesson 4");
+check(placeLearner(missAtId("p6a")).lesson === 6, "passes through L5, misses L6 → lesson 6");
+check(placeLearner(missAtId("p10a")).lesson === 10, "passes through L9, misses L10 → lesson 10");
+const top = maxContentLesson();
 const all = placeLearner(placementItems.map(pass));
-check(all.lesson === 5 && all.beyondContent, "passes everything → lesson 5 and 'beyond content' (nothing further exists yet)", JSON.stringify(all));
-// extends automatically: if the content grew a lesson 6 with no placement items yet, a perfect score starts at 6, not 'beyond'.
-const grown = placeLearner(placementItems.map(pass), placementItems, 6);
-check(grown.lesson === 6 && !grown.beyondContent, "if content has a lesson 6, a perfect score starts there (not 'beyond content')", JSON.stringify(grown));
-check(maxContentLesson() === 5, "content currently ends at lesson 5");
+check(all.lesson === top && all.beyondContent, `passes everything → lesson ${top} and 'beyond content' (nothing further exists yet)`, JSON.stringify(all));
+// extends automatically: if the content grew a lesson with no placement items yet, a perfect score starts there, not 'beyond'.
+const grown = placeLearner(placementItems.map(pass), placementItems, top + 1);
+check(grown.lesson === top + 1 && !grown.beyondContent, `if content has a lesson ${top + 1}, a perfect score starts there (not 'beyond content')`, JSON.stringify(grown));
+check(top === 10, "content currently ends at lesson 10");
 
 async function db() {
   if (!process.env.DATABASE_URL) {

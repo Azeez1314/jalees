@@ -26,7 +26,7 @@ export async function runDbChecks(check: Check) {
   const stranger = `test-retention-other-${suffix}`;
   const sessions: string[] = [];
   const newSession = async (u: string) => {
-    const [s] = await db`INSERT INTO sessions (user_id, scenario_id) VALUES (${u}, 'b1l1-around-the-house') RETURNING id`;
+    const [s] = await db`INSERT INTO sessions (user_id, scenario_id) VALUES (${u}, 'b1l1-what-is-this') RETURNING id`;
     sessions.push(s.id);
     return s.id as string;
   };

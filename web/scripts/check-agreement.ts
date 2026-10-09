@@ -26,34 +26,37 @@ function expectNone(label: string, text: string, lesson: number) {
 
 // --- errors that must be caught ---
 expectFix("fem demonstrative + masc noun", "هذه كتاب", 1, "هذا كتاب");
-expectFix("masc demonstrative + fem noun", "هذا بنت", 1, "هذه بنت");
+expectFix("masc demonstrative + fem noun", "هذا بنت", 6, "هذه بنت");
 expectFix("noun with ال", "هذه الكتاب", 1, "هذا الكتاب");
-expectFix("far demonstrative, fem noun", "ذلك سيارة", 2, "تلك سيارة");
-expectFix("far demonstrative, masc noun", "تلك بيت", 1, "ذلك بيت");
-expectFix("ذاك is masculine", "ذاك سيارة", 2, "تلك سيارة");
-expectFix("learner wrote ه for ة", "هذا مدرسه", 4, "هذه مدرسه");
-expectFix("hamza spelling variants", "هذا امرأة", 1, "هذه امرأة");
+expectFix("far demonstrative, fem noun", "ذلك سيارة", 7, "تلك سيارة");
+expectFix("far demonstrative, masc noun", "تلك بيت", 2, "ذلك بيت");
+expectFix("ذاك is masculine", "ذاك سيارة", 7, "تلك سيارة");
+expectFix("learner wrote ه for ة", "هذا مدرسه", 6, "هذه مدرسه");
+expectFix("hamza spelling variants (أخت typed with a bare alef)", "هذا اخت", 6, "هذه اخت");
 expectFix("learner typed tashkeel", "هَذِهِ كِتَابٌ", 1, "هذا كتاب");
-expectFix("possessive suffix (lesson 5)", "هذه قلمك", 5, "هذا قلمك");
-expectFix("fem noun + possessive (lesson 5)", "هذا سيارتي", 5, "هذه سيارتي");
+expectFix("possessive suffix (lesson 10)", "هذه قلمك", 10, "هذا قلمك");
+expectFix("fem noun + possessive (lesson 10)", "هذا سيارتي", 10, "هذه سيارتي");
 expectFix("error in a later sentence", "هذا بيت. هذه قلم", 1, "هذا قلم");
 
 // --- the correction keeps the rest of the learner's sentence and quotes only the faulty sentence ---
-const two = detectAgreementError("هذا بيت. هذه قلم جميل", 2);
+const two = detectAgreementError("هذا بيت. هذه قلم جميل", 3);
 check(two?.original === "هذه قلم جميل", "quotes only the sentence with the error", JSON.stringify(two));
 check(Boolean(two?.corrected.startsWith("هَذَا") && two.corrected.endsWith("قلم جميل")), "swaps only the demonstrative", JSON.stringify(two));
 
 // --- must NOT fire ---
+expectNone("never corrects into a feminine demonstrative before it is taught (lesson 5)", "هذا بنت", 5);
+expectNone("never corrects into تلك before lesson 7", "ذلك سيارة", 6);
+expectNone("never corrects into ذلك before lesson 2", "تلك بيت", 1);
 expectNone("agreeing masculine", "هذا كتاب", 1);
-expectNone("agreeing feminine", "هذه بنت", 1);
-expectNone("agreeing far demonstrative", "تلك سيارة", 2);
-expectNone("كتابة (writing) is not كتاب + suffix", "هذه كتابة", 5);
-expectNone("possessive not judged before lesson 5", "هذه قلمك", 1);
+expectNone("agreeing feminine", "هذه بنت", 6);
+expectNone("agreeing far demonstrative", "تلك سيارة", 7);
+expectNone("كتابة (writing) is not كتاب + suffix", "هذه كتابة", 10);
+expectNone("possessive not judged before lesson 10", "هذه قلمك", 9);
 expectNone("unknown noun", "هذه حقيبة", 1);
 expectNone("noun not yet taught (مدرسة at lesson 1)", "هذا مدرسة", 1);
 expectNone("ambiguous-gender noun (سوق) never judged", "هذه سوق", 4);
-expectNone("adjective after demonstrative is not a noun", "هذا جميل", 2);
-expectNone("no demonstrative", "الكتاب جميل", 2);
+expectNone("adjective after demonstrative is not a noun", "هذا جميل", 3);
+expectNone("no demonstrative", "الكتاب جميل", 3);
 expectNone("Latin transliteration", "hadha kitab", 1);
 expectNone("empty", "", 1);
 expectNone("punctuation between demonstrative and noun", "هذا، كتاب", 1);
@@ -71,17 +74,17 @@ check(!replyModelsFix("هَذِهِ كِتَابَةٌ.", err), "replyModelsFix:
 check(!replyModelsFix("نَعَمْ، هَذَا بَابٌ.", err), "replyModelsFix: rejects an unrelated reply");
 
 // --- several mismatches in one sentence are all fixed ---
-const multi = detectAgreementError("هذه كتاب وهذا بنت", 1);
+const multi = detectAgreementError("هذه كتاب وهذا بنت", 6);
 check(multi !== null && sameWords(multi.corrected, "هذا كتاب وهذه بنت"), "fixes every mismatch in the sentence", JSON.stringify(multi));
 
 // --- fused و / ف prefix ("and this") ---
-expectFix("fused و on the demonstrative", "وهذا بنت", 1, "وهذه بنت");
-expectFix("fused و with tashkeel kept", "وَهَذَا بِنْتٌ", 1, "وهذه بنت");
-expectFix("fused ف on a far demonstrative", "فذلك سيارة", 2, "فتلك سيارة");
-expectNone("fused و, agreeing", "وهذه بنت", 1);
-const fused = detectAgreementError("وهذا بنت", 1);
+expectFix("fused و on the demonstrative", "وهذا بنت", 6, "وهذه بنت");
+expectFix("fused و with tashkeel kept", "وَهَذَا بِنْتٌ", 6, "وهذه بنت");
+expectFix("fused ف on a far demonstrative", "فذلك سيارة", 7, "فتلك سيارة");
+expectNone("fused و, agreeing", "وهذه بنت", 6);
+const fused = detectAgreementError("وهذا بنت", 6);
 check(fused?.corrected.startsWith("وَهِذِهِ".slice(0, 1)) === true && fused.corrected.includes("هَذِهِ"), "prefix و is preserved in the correction", JSON.stringify(fused));
-check(replyModelsFix("وَهَذِهِ بِنْتٌ.", detectAgreementError("هذا بنت", 1)!), "replyModelsFix: reply with fused وَ counts");
+check(replyModelsFix("وَهَذِهِ بِنْتٌ.", detectAgreementError("هذا بنت", 6)!), "replyModelsFix: reply with fused وَ counts");
 
 // --- sanitizing the buddy's own replies ---
 check(removeAgreementErrors("هَذِهِ كِتَابٌ. وَمَا هَذَا؟", 1) === "وَمَا هَذَا؟", "drops only the mismatching sentence");

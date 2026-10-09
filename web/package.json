@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:content": "tsx scripts/check-content.ts",
+    "check:lessons": "tsx scripts/check-lessons.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "try:turn": "tsx scripts/try-turn.ts",

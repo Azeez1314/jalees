@@ -5,13 +5,15 @@ import { detectAgreementError, wordsKey } from "@/lib/agreement";
 /** Final ة and ه are interchangeable (learners type ه), so compare them as one letter. */
 const canon = (w: string) => w.replace(/ة$/, "ه");
 const wordsOf = (text: string) => wordsKey(text).split(" ").filter(Boolean).map(canon);
+/** A learner's word, also without a fused "and" (وذلك → ذلك) or a yes/no أ (أهذا → هذا). Slots are matched against these. */
+const withoutAttached = (w: string) => [w, ...(w.length > 3 && /^[وا]/.test(w) ? [w.slice(1)] : [])];
 
 /**
  * Does the learner's Arabic answer the prompt? Every slot must be matched by one of its alternatives, and the answer must not
  * pair a demonstrative with a noun of the wrong gender. Deterministic: same answer, same verdict, no model involved.
  */
 export function scoreAnswer(item: PlacementItem, answer: string): boolean {
-  const words = new Set(wordsOf(answer));
+  const words = new Set(wordsOf(answer).flatMap(withoutAttached));
   if (!words.size) return false;
   const slotsMet = item.slots.every((alternatives) => alternatives.some((alt) => wordsOf(alt).every((w) => words.has(w))));
   return slotsMet && detectAgreementError(answer, item.lessonNo) === null;

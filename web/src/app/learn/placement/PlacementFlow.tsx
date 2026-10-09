@@ -121,7 +121,7 @@ export function PlacementFlow({ previousLesson }: { previousLesson: number | nul
         {lesson && <p className="text-muted">{lesson.title}</p>}
         <p className="mt-3">
           {result.beyondContent
-            ? "You answered everything we can test today — well done. More lessons are on the way; until then, Lesson 5 scenarios are the most advanced practice available."
+            ? "You answered everything we can test today — well done. More lessons are on the way; until then, the latest lesson's scenarios are the most advanced practice available."
             : result.lesson === 1
               ? "Lesson 1 is the perfect place to begin. You'll build from the very first sentences."
               : `You're comfortable up to lesson ${result.lesson - 1}, so lesson ${result.lesson} is where practice will help most.`}

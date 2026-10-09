@@ -48,7 +48,7 @@ async function main() {
   const owner = `test-voice-${Math.random().toString(36).slice(2)}`;
   const stranger = `test-voice-${Math.random().toString(36).slice(2)}`;
   const db = sql();
-  const [s] = await db`INSERT INTO sessions (user_id, scenario_id) VALUES (${owner}, 'b1l1-around-the-house') RETURNING id`;
+  const [s] = await db`INSERT INTO sessions (user_id, scenario_id) VALUES (${owner}, 'b1l1-what-is-this') RETURNING id`;
   try {
     const [buddy] = await db`INSERT INTO turns (session_id, role, text_display, text_diacritized) VALUES (${s.id}, 'buddy', 'هذا باب', 'هَذَا بَابٌ') RETURNING id`;
     const [learner] = await db`INSERT INTO turns (session_id, role, text_display, text_diacritized) VALUES (${s.id}, 'learner', 'نعم', 'نعم') RETURNING id`;
