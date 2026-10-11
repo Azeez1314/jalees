@@ -10,16 +10,17 @@ const ARABIC_WORD = /[ء-غـ-ٰٟۖ-ۭ]+/g;
  * Prefixes that attach to a word without changing lesson scope. Only "ال" (the) and "و" (and) are always on; the rest are
  * switched on by the lesson that teaches them (a "@p:…" marker in the allowed set, from `newAffixes` in lessons.ts):
  * "ا" is the yes/no question أَ (lesson 1), "ل" means 'for / belonging to' and "لل" is ل + ال (lesson 6), "ب" means 'with / in / by'
- * (Book 2 lesson 1: بكم، بمائة، ليس بطالب).
+ * (Book 2 lesson 1: بكم، بمائة، ليس بطالب), "ك" means 'like' (Book 2 lesson 18: كالمسجد، كساعتك), and "س" is the future marker
+ * (Book 2 lesson 11) — for nouns only the always-on rules apply; before a verb it is handled in `generatedVerbMatches`.
  */
 const ALWAYS_PREFIXES = ["ال", "و"];
-const OPTIONAL_PREFIXES: Record<string, string[]> = { ا: ["ا"], ل: ["لل", "ل"], ب: ["ب"] };
+const OPTIONAL_PREFIXES: Record<string, string[]> = { ا: ["ا"], ل: ["لل", "ل"], ب: ["ب"], ك: ["ك"], س: ["س"], ف: ["ف"] };
 
 /**
  * Attached-pronoun suffixes, each switched on by its "@s:…" marker (lesson 10 teaches ـي ـك ـه ـها). Without the marker a word
  * with a suffix is NOT matched to its base, so the buddy can't use a possessive before the learner has met it.
  */
-const SUFFIXES = ["كما", "هما", "كم", "كن", "هن", "هم", "نا", "ها", "ي", "ك", "ه", "تان", "ان", "ون", "ات", "ا"];
+const SUFFIXES = ["كما", "هما", "كم", "كن", "هن", "هم", "نا", "ها", "ي", "ك", "ه", "تان", "تين", "ان", "ين", "ون", "ات", "ا"];
 
 /**
  * What the base looks like once a suffix is removed, beyond the plain remainder:
@@ -100,12 +101,15 @@ function generatedVerbMatches(norm: string, allowed: Set<string>): boolean {
     if (depth >= 3 || w.length < 4) return false;
     if (w.startsWith("و") && withPrefixes(w.slice(1), depth + 1)) return true;
     if (w.startsWith("س") && allowed.has(prefixMarker("س")) && /^[يتنا]/.test(w.slice(1)) && withPrefixes(w.slice(1), depth + 1)) return true;
+    // لـ (in order to: خرجتُ لأشربَ) and فـ (so / then: فسأذهب) before a verb, once those prefixes are taught.
+    if (w.startsWith("ل") && allowed.has(prefixMarker("ل")) && /^[يتنا]/.test(w.slice(1)) && withPrefixes(w.slice(1), depth + 1)) return true;
+    if (w.startsWith("ف") && allowed.has(prefixMarker("ف")) && withPrefixes(w.slice(1), depth + 1)) return true;
     if (w.startsWith("ا") && allowed.has(prefixMarker("ا"))) {
       const rest = w.slice(1);
       const endsLikePast = (r: string) =>
         PAST_ENDING.test(r) ||
         OBJECT_SUFFIXES.some((o) => allowed.has(objectMarker(o)) && r.endsWith(o) && PAST_ENDING.test(r.slice(0, -o.length).replace(/و$/, "")));
-      if (rest.length > 3 && (/^[يتن]/.test(rest) || endsLikePast(rest)) && withPrefixes(rest, depth + 1)) return true;
+      if (rest.length >= 3 && (/^[يتن]/.test(rest) || endsLikePast(rest)) && withPrefixes(rest, depth + 1)) return true;
     }
     return false;
   };

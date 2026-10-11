@@ -45,7 +45,8 @@ export async function runPlacementDb(check: Check) {
 
     // ---- a learner who answers everything -----------------------------------------------------------------------------
     let t = await startAttempt(U3);
-    for (let i = 0; i < placementItems.length; i++) t = (await submitAnswer(U3, t.attemptId, good(i), i + 1))!;
+    // The test skips ahead for a strong learner, so follow the server: answer whatever it asks until it is over.
+    for (let guard = 0; guard < placementItems.length && !t.done; guard++) t = (await submitAnswer(U3, t.attemptId, t.item!.example, t.index))!;
     check(t.done && t.placement?.lesson === top && t.placement.beyondContent, `answering everything → lesson ${top} and 'beyond content'`, JSON.stringify(t.placement));
     check((await lessonOf(U3)).level_lesson === top, `…and the profile says lesson ${top}`);
 

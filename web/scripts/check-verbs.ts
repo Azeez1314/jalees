@@ -95,6 +95,21 @@ paradigm("hamza-initial (أكل): آكل merges", akala, { "past:3ms": "اكل",
 const sa2ala: VerbEntry = { root: "سأل", lemma: "سَأَلَ", cls: "sound", gloss: "ask" };
 paradigm("hamza in the middle (سأل)", sa2ala, { "past:3ms": "سال", "pres:3ms": "يسال", "pres:1s": "اسال", "imp:2ms": "اسال" });
 
+// ---- Form VIII defective (اشترى) and hamza-initial defective (أتى) ---------------------------------------------------------
+const ishtara: VerbEntry = { root: "شري", lemma: "اِشْتَرَى", gloss: "buy", cls: "defective", weak: "ي", form: 8 };
+paradigm("Form VIII defective (اشترى)", ishtara, {
+  "past:3ms": "اشتري", "past:3fs": "اشترت", "past:3mp": "اشتروا", "past:3fp": "اشترين", "past:1s": "اشتريت", "past:1p": "اشترينا", "past:2mp": "اشتريتم",
+  "pres:3ms": "يشتري", "pres:1s": "اشتري", "pres:3mp": "يشترون", "pres:2fs": "تشترين", "pres:3fp": "يشترين", "juss:3ms": "يشتر", "subj:3mp": "يشتروا",
+  "imp:2ms": "اشتر", "imp:2fs": "اشتري", "imp:2mp": "اشتروا",
+});
+const ishtamala: VerbEntry = { root: "جمع", lemma: "اِجْتَمَعَ", gloss: "meet", cls: "sound", form: 8 };
+paradigm("Form VIII sound (اجتمع)", ishtamala, { "past:3ms": "اجتمع", "past:1s": "اجتمعت", "pres:3ms": "يجتمع", "pres:1s": "اجتمع", "pres:3mp": "يجتمعون", "imp:2ms": "اجتمع" });
+const ataa: VerbEntry = { root: "أتي", lemma: "أَتَى", gloss: "come", cls: "defective", weak: "ي", overrides: { "imp:2ms": ["ائت"], "imp:2fs": ["ائتي"], "imp:2mp": ["ائتوا"], "imp:2fp": ["ائتين"] } };
+paradigm("hamza-initial defective (أتى)", ataa, {
+  "past:3ms": "اتي", "past:3fs": "اتت", "past:3mp": "اتوا", "past:1s": "اتيت", "pres:3ms": "ياتي", "pres:1s": "اتي", "pres:3fs": "تاتي", "pres:3mp": "ياتون",
+  "pres:2fs": "تاتين", "juss:3ms": "يات", "imp:2ms": "ائت",
+});
+
 // ---- doubled ت / ن at the suffix (written with a shadda) ----------------------------------------------------------------------
 const kaana: VerbEntry = { root: "كون", lemma: "كَانَ", gloss: "be", cls: "hollow", weak: "و" };
 paradigm("kaana: كنّا / كنّ", kaana, { "past:3ms": "كان", "past:3fs": "كانت", "past:1p": "كنا", "past:3fp": "كن", "past:1s": "كنت", "past:2mp": "كنتم", "pres:3ms": "يكون", "pres:3fp": "يكن", "juss:3ms": "يكن", "imp:2ms": "كن" });

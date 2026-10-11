@@ -152,9 +152,56 @@ ok("قَالَ. قَالَتْ. قُلْتُ. قَالُوا. قُلْنَ", B2(
 check(buildBuddySystemPrompt(B2(6), "g").includes("رَأَى") && buildBuddySystemPrompt(B2(6), "g").includes("Taught conjugations"), "the prompt lists the taught verbs and conjugations");
 check(!buildBuddySystemPrompt(B2(6), "g").includes("@"), "no markers leak into the Book 2 prompt");
 
+
+// ---- Book 2 lessons 11-31 ----------------------------------------------------------------------------------------------------
+no("يَدْرُسُونَ", B2(10), "the present for 'they' before lesson 11");
+ok("يَدْرُسُونَ. تَسْكُنُونَ. يَسْكُنَّ", B2(11), "present they / you (pl.) / they (f.)");
+no("سَأَذْهَبُ", B2(10), "the future سـ before lesson 11");
+ok("سَأَذْهَبُ. سَيَرْجِعُ. سَوْفَ أَكْتُبُ", B2(11), "the future");
+no("تَذْهَبِينَ", B2(11), "the present for 'you (f.)' before lesson 12");
+ok("تَذْهَبِينَ. تَلْعَبْنَ. نَلْعَبُ", B2(12), "the rest of the present");
+no("اِجْلِسِي", B2(13), "a command (to a woman) before lesson 14");
+ok("اِجْلِسْ. اِجْلِسِي. اِجْلِسُوا. اِجْلِسْنَ. اِفْتَحِ النَّافِذَةَ", B2(14), "commands");
+ok("اِقْرَأْ. اِقْرَئِي. اِقْرَؤُوا", B2(14), "commands of a hamza-final verb");
+ok("يَقْرَؤُونَ. تَقْرَئِينَ. يَقْرَأْنَ", B2(12), "present plural / f. of قرأ (hamza on waw / yaa')");
+no("لَا تَجْلِسِي", B2(14), "'don't (f.)' before lesson 15");
+ok("لَا تَجْلِسِي. لَا تَجْلِسُوا. لَا تَجْلِسْنَ", B2(15), "negative commands");
+no("أُرِيدُ قَلَمًا", B2(15), "أريد before lesson 16");
+ok("أُرِيدُ قَلَمًا أَزْرَقَ. تُرِيدِينَ. يُرِيدُونَ", B2(16), "wanting (أراد)");
+no("اِشْتَرَيْتُ", B2(15), "اشترى before lesson 16");
+ok("اِشْتَرَيْتُ. يَشْتَرِي. اِشْتَرِ. حَمْرَاءُ", B2(16), "buying (Form VIII) and feminine colours");
+no("يَذْهَبُوا", B2(17), "the subjunctive for 'they' before lesson 18");
+ok("أَنْ يَذْهَبُوا. أَنْ تَذْهَبِي. أَنْ تَذْهَبُوا", B2(18), "the subjunctive for 'they / you'");
+no("لَنْ أَذْهَبَ", B2(18), "لن before lesson 19");
+ok("لَنْ أَذْهَبَ. لَنْ يَرْجِعَ", B2(19), "لن");
+no("الْقَمِيصَيْنِ", B2(19), "the dual in the oblique case before lesson 20");
+ok("الْقَمِيصَيْنِ. قَلَمَيْنِ. أَحَدُهُمَا. الْمُدَرِّسِينَ", B2(20), "dual and plural endings in ين");
+no("لَمْ يَأْتِ", B2(20), "لم + أتى before lesson 21");
+ok("لَمْ يَذْهَبْ. لَمَّا يَحْضُرْ. لَمْ يَأْتِ", B2(21), "لم and لمّا");
+ok("لِأَشْرَبَ. فَسَأَذْهَبُ. لِيَذْهَبَ", B2(17), "لـ / فـ before a verb");
+ok("أَتُحِبُّ؟ أَتَسْكُنُ؟ أَيَذْهَبُ؟", B2(18), "yes/no أ before a three-letter present form");
+no("يَجِبُ", B2(25), "وجب before lesson 26");
+ok("يَجِبُ عَلَيْكَ. قِفْ. ضَعْ. يَصِلُ. يَقِفُ", B2(26), "verbs that start with و");
+no("بِعْتُ", B2(26), "hollow-verb forms before lesson 27");
+ok("نِمْتُ. بِعْتُ. زُرْتُ. خِفْتُ. يَبِيعُ. لَمْ يَنَمْ. نَمْ", B2(27), "hollow verbs");
+no("دَعَوْتُ", B2(27), "defective-verb forms before lesson 28");
+ok("دَعَوْتُ. رَمَيْتُ. يَرْمِي. يَدْعُو. اِمْشِ. لَمْ يَرْمِ. ادْعُ", B2(28), "defective verbs");
+no("شَمَمْتُ", B2(28), "doubled-verb forms before lesson 29");
+ok("شَمَمْتُ. يَشُمُّ. ظَنَّ. عُدَّ. رَدَدْتُ", B2(29), "doubled verbs");
+no("ذَهَبَا", B2(29), "the dual of a verb before lesson 30");
+ok("ذَهَبَا. ذَهَبَتَا. ذَهَبْتُمَا. يَذْهَبَانِ. اِذْهَبَا. لَنْ يَذْهَبَا", B2(30), "dual verbs");
+ok("جِئْتُمَا. يَجِيئَانِ", B2(30), "jaa'a in the dual");
+no("يَجِيئُونَ", B2(10), "jaa'a (present, they) before lesson 11");
+ok("يَجِيءُ. تَجِيءُ. أَجِيءُ. جِئْتُ. جَاؤُوا", B2(10), "jaa'a through lesson 10");
+ok("يَرَى. تَرَى. أَرَى. رَأَى. رَأَوْا", B2(10), "ra'aa through lesson 10");
+ok("لَمْ يَرَ. لَمْ تَرَيْ", B2(21), "ra'aa in the jussive");
+no("غَدًا", B2(9), "غدا before lesson 10");
+check(buildBuddySystemPrompt(B2(14), "g").includes("command"), "the prompt describes the commands once they are taught");
+check(!buildBuddySystemPrompt(B2(30), "g").includes("@"), "no markers leak into the lesson-30 prompt");
+
 // ---- gender tables ---------------------------------------------------------------------------------------------
 const key = (w: string) => normalizeArabic(w).replace(/^ال(?=.)/, "");
-for (const upto of [1, 5, 10, 16, 23, 28, 33]) {
+for (const upto of [1, 5, 10, 16, 23, 28, 33, 40, 47, 54]) {
   const g = cumulativeGenders(upto);
   const m = new Set(g.masculine.map(key));
   const f = g.feminine.map(key);

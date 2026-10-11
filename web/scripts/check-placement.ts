@@ -72,6 +72,38 @@ const grown = placeLearner(placementItems.map(pass), placementItems, top + 1);
 check(grown.lesson === top + 1 && !grown.beyondContent, `if content has a lesson ${top + 1}, a perfect score starts there (not 'beyond content')`, JSON.stringify(grown));
 check(top === lessons.length && lessons.filter((l) => l.book === 1).length === 23, "content positions run through every authored lesson (Book 1 complete)");
 
+
+// ---- skip-ahead: a strong learner is not asked every item ---------------------------------------------------------------------
+{
+  const asked: typeof placementItems = [];
+  const results: ItemResult[] = [];
+  for (let guard = 0; guard < 500; guard++) {
+    const item = nextItem(results);
+    if (!item) break;
+    asked.push(item);
+    results.push(pass(item));
+  }
+  check(asked.length < placementItems.length / 2, `a perfect learner answers far fewer than all ${placementItems.length} items`, `asked ${asked.length}`);
+  check(asked[asked.length - 1].id === placementItems[placementItems.length - 1].id, "…but the last (hardest) item is always asked before concluding");
+  check(isFinished(results), "…and then the test reports finished");
+  const out = placeLearner(results);
+  check(out.beyondContent && out.lesson === maxContentLesson(), "…and places them at the top, 'beyond content'", JSON.stringify(out));
+  check(asked.every((a, i) => i === 0 || placementItems.indexOf(a) > placementItems.indexOf(asked[i - 1])), "items are only ever asked in increasing order");
+  check(new Set(asked.map((a) => a.id)).size === asked.length, "no item is asked twice");
+}
+{
+  // Pass six, then miss the next one: placed one past the highest lesson they passed (never past the lesson they missed).
+  const results: ItemResult[] = [];
+  for (let i = 0; i < 6; i++) results.push(pass(nextItem(results)!));
+  const missed = nextItem(results)!;
+  results.push(fail(missed));
+  const out = placeLearner(results);
+  const highestPassed = Math.max(...results.filter((r) => r.pass).map((r) => r.lessonNo));
+  check(isFinished(results), "a miss after skipping ahead ends the test");
+  check(out.lesson === highestPassed + 1 && out.lesson <= missed.lessonNo, "…and starts the learner one past the highest lesson they passed", JSON.stringify({ out, highestPassed, missed: missed.lessonNo }));
+}
+check(placeLearner([pass(placementItems[0]), fail(placementItems[1])]).lesson === 1, "a miss in the same lesson as a pass does not credit that lesson");
+
 async function db() {
   if (!process.env.DATABASE_URL) {
     console.log("- skipped DB checks (no DATABASE_URL)");

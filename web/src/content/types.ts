@@ -16,8 +16,8 @@ export interface VerbEntry {
   /** The dictionary form, diacritized: the he-form of the past (ذَهَبَ، أَحَبَّ). Shown to the buddy and in the UI. */
   lemma: string;
   cls: VerbClass;
-  /** Form I (default) or Form IV (أَفْعَلَ: أحب، أراد، أرسل). */
-  form?: 1 | 4;
+  /** Form I (default), Form IV (أَفْعَلَ: أحب، أراد، أرسل) or Form VIII (اِفْتَعَلَ: اشترى — sound and defective verbs only). */
+  form?: 1 | 4 | 8;
   /**
    * hollow: the middle letter shown in the present (قال يقول → "و", باع يبيع → "ي", خاف يخاف → "ا"; Form IV hollow is always ي).
    * defective: the weak third radical ("و" دعا, "ي" رمى).

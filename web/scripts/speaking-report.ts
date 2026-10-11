@@ -22,7 +22,7 @@ async function main() {
     return;
   }
 
-  const known = cumulativeVocab(23); // Book 1 only — a rough "already-taught" reference until Books 2-3 are authored
+  const known = cumulativeVocab(54); // Books 1-2 — a rough "already-taught" reference until Book 3 is authored
   type Agg = { learner: number; words: number; voice: number; seconds: number; recasts: number; upgrades: number; distinct: Set<string>; user: string; scenario: string; started: string; lens: number[] };
   const bySession = new Map<string, Agg>();
   for (const r of rows) {
@@ -64,7 +64,7 @@ async function main() {
   console.log(
     `\n${bySession.size} sessions, ${users.size} learners, ${turns} learner turns, ${(wordsTotal / Math.max(1, turns)).toFixed(1)} words per turn on average.`
   );
-  console.log(`Words used that are outside the Book 1 lists (a rough 'stretch' measure): ${outside.size} distinct.`);
+  console.log(`Words used that are outside the Book 1-2 lists (a rough 'stretch' measure): ${outside.size} distinct.`);
   console.log([...outside.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25).map(([w, n]) => `${w}×${n}`).join("  "));
 }
 

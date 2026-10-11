@@ -49,13 +49,15 @@ function attach(stem: string, suffix: string): string {
 function pastForm(v: VerbEntry, person: Person): string[] {
   const { r1, r2, r3 } = radicals(v);
   const iv = v.form === 4 ? "ا" : "";
-  const base = r1 + r2;
+  const f8 = v.form === 8;
+  if (f8 && v.cls !== "sound" && v.cls !== "defective") throw new Error(`Form VIII is only generated for sound and defective verbs: ${v.root}`);
+  const base = f8 ? "ا" + r1 + "ت" + r2 : r1 + r2;
 
   let out: string;
   switch (v.cls) {
     case "sound":
     case "assimilated": {
-      const stem = r1 + r2 + r3;
+      const stem = f8 ? base + r3 : r1 + r2 + r3;
       out = pastWith(stem, stem, person);
       break;
     }
@@ -127,12 +129,14 @@ function presentForm(v: VerbEntry, person: Person, mood: Mood): string[] {
   const ending = femininePlural ? "ن" : nunSuffix ? (mood === "pres" ? nunSuffix : DROPPED[person]!) : "";
   // A bare jussive has no ending at all (لم يقل، لم يدع، لم يمدّ): weak letters drop and doubled letters may split.
   const bareJussive = mood === "juss" && !nunSuffix && !femininePlural;
+  const f8 = v.form === 8; // افتعل: اشترى يشتري، اجتمع يجتمع (the ت after the first radical)
+  const t = f8 ? "ت" : "";
 
   const forms: string[] = [];
   switch (v.cls) {
     case "sound":
       // Hamza-initial verbs merge their hamza with the I-prefix: أكل → آكل (normalized: اكل).
-      forms.push(attach(pre + (person === "1s" && r1 === "ا" ? r2 + r3 : r1 + r2 + r3), ending));
+      forms.push(attach(pre + (person === "1s" && r1 === "ا" && !f8 ? r2 + r3 : r1 + t + r2 + r3), ending));
       break;
     case "assimilated":
       forms.push(attach(pre + (v.keepsWaw ? r1 : "") + r2 + r3, ending));
@@ -151,7 +155,8 @@ function presentForm(v: VerbEntry, person: Person, mood: Mood): string[] {
     }
     case "defective": {
       const weak = v.weak === "و" ? "و" : "ي";
-      const base = r1 + r2;
+      // Hamza-initial defective verbs merge the hamza with the I-prefix in the 1st person: أتى → آتي (normalized: اتي).
+      const base = person === "1s" && r1 === "ا" && !f8 ? r2 : r1 + t + r2;
       if (bareJussive) forms.push(pre + base); // لم يدع، لم يرم
       else if (femininePlural) forms.push(pre + base + weak + ending); // يدعون / يرمين
       else if (person === "2fs") forms.push(pre + base + (mood === "pres" ? "ين" : "ي")); // تدعين / تدعي

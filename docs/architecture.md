@@ -91,7 +91,7 @@ Isolation: every user-owned table is keyed by `user_id` and every query filters 
 
 ## Supporting flows
 
-**Placement** (`/api/placement/*`): 25 short English → Arabic production prompts, one or two per lesson, escalating; stops at the first miss and starts the learner at that lesson, writing `level_lesson` to the profile. **Scored deterministically** (word slots + the gender-agreement detector), not by an LLM — a deliberate change from the original design: it is free, can't hallucinate a grade, and is unit-testable. Covers all 23 Book 1 lessons (one to two items per lesson, ~25 in all; a miss ends the test).
+**Placement** (`/api/placement/*`): about 55 short English → Arabic production prompts, one or two per lesson, escalating; stops at the first miss and starts the learner at that lesson, writing `level_lesson` to the profile. **Scored deterministically** (word slots + the gender-agreement detector), not by an LLM — a deliberate change from the original design: it is free, can't hallucinate a grade, and is unit-testable. Covers Books 1-2 (54 lessons, ~56 items). The walk **skips ahead** while the learner keeps passing (every 3 passes the stride grows by one), always asks the last item before concluding, stops at the first miss, and starts the learner one past the highest lesson they passed — so a strong learner answers ~15 questions.
 
 **Session recap** (`/api/recap`): on session end, one LLM call over the session's turns + mistakes → recap card (patterns, not one-offs) + updates `memory_facts` (extract new personal facts) + schedules mistakes into spaced review (`review_due_at`: 1d/3d/7d/21d).
 
@@ -105,7 +105,7 @@ Isolation: every user-owned table is keyed by `user_id` and every query filters 
 - **Phase 1 — Text conversation loop.** Auth, lessons/scenarios tables (hand-author Book 1; now all 23 lessons), `/api/turn` text-only, recast + display. Usable product for testing pedagogy with 5–10 real learners.
 - **Phase 2 — Voice.** MediaRecorder capture, STT/TTS behind interfaces, transcript confirmation UI, session cap.
 - **Phase 3 — Memory + recap + mistake review.** The retention layer. → built in `web/` (see its README, "Retention"). Recap patterns are deterministic with curated tips; buddy-side Arabic memory is OFF because measured leakage tripled (13% → 39%).
-- **Phase 4 — Placement + Stripe + polish.** Trial → subscription; landing page; creator-partnership launch. → built in `web/` (README: *Billing and access*, *Placement*, *Your data*, *Pre-launch*). Remaining before launch is in `npm run check:launch` — chiefly legal review, live Stripe, hosting, and **content beyond Book 2 lesson 10 (Book 2 lessons 11–31 and Book 3)**.
+- **Phase 4 — Placement + Stripe + polish.** Trial → subscription; landing page; creator-partnership launch. → built in `web/` (README: *Billing and access*, *Placement*, *Your data*, *Pre-launch*). Remaining before launch is in `npm run check:launch` — chiefly legal review, live Stripe, hosting, and **content beyond Book 2 (Book 3 and the further books)**.
 
 ## Top technical risks (watch continuously)
 
@@ -130,3 +130,7 @@ genders, a learner's level and placement results are all keyed by position. Book
 class entries and `lib/verbs.ts` generates normalized conjugations for the slots (tense × person) a lesson unlocks. The vocabulary checker
 matches exact generated forms, allowing a fused و, the future سـ, the yes/no أ before an unmistakable verb form, and object pronouns once
 taught. Known heuristic limits are listed in `content/lessons.ts` and the web README.
+
+**Book 2 is complete (all 31 lessons).** The generator covers the sound, assimilated, hollow, defective and doubled classes in Forms I, IV and VIII;
+irregular verbs (جاء، رأى، قرأ/بدأ with the hamza seat changes, أكل/أخذ imperatives) carry explicit per-slot overrides. A lesson unlocks tense × person
+slots, so the checker is exact about which conjugation of which verb has been taught.

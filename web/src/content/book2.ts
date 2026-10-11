@@ -15,30 +15,61 @@ import type { Lesson, VerbEntry } from "./types";
 const slots = (...s: string[]) => s;
 const PAST_SOME = slots("past:3ms", "past:3fs", "past:3mp", "past:3fp", "past:1s", "past:2ms");
 
-/** jaa'a (came): irregular spelling around the hamza, so every taught slot is written out. */
+/**
+ * jaa'a (came): the hamza moves between seats (جاء، جاؤوا، يجيئون، جئتُ), so every slot is written out. The checker compares
+ * normalized forms (ئ→ي, ؤ→و), so each spelling a learner might type is listed.
+ */
 const JAA: VerbEntry = {
   root: "جيء", lemma: "جَاءَ", gloss: "come", cls: "hollow", weak: "ي",
   overrides: {
-    "past:3ms": ["جاء"], "past:3fs": ["جاءت"], "past:3mp": ["جاءوا", "جاؤوا"], "past:3fp": ["جئن"],
-    "past:2ms": ["جئت"], "past:2fs": ["جئت"], "past:2mp": ["جئتم"], "past:2fp": ["جئتن"], "past:1s": ["جئت"], "past:1p": ["جئنا"],
-    "pres:3ms": ["يجيء"], "pres:3fs": ["تجيء"], "pres:2ms": ["تجيء"], "pres:1s": ["أجيء"], "pres:1p": ["نجيء"],
+    "past:3ms": ["جاء"], "past:3fs": ["جاءت"], "past:3md": ["جاءا"], "past:3fd": ["جاءتا"], "past:3mp": ["جاءوا", "جاؤوا"], "past:3fp": ["جئن"],
+    "past:2ms": ["جئت"], "past:2fs": ["جئت"], "past:2d": ["جئتما"], "past:2mp": ["جئتم"], "past:2fp": ["جئتن"], "past:1s": ["جئت"], "past:1p": ["جئنا"],
+    "pres:3ms": ["يجيء", "يجئ"], "pres:3fs": ["تجيء"], "pres:3md": ["يجيئان"], "pres:3fd": ["تجيئان"], "pres:3mp": ["يجيئون", "يجيؤون"], "pres:3fp": ["يجئن"],
+    "pres:2ms": ["تجيء"], "pres:2fs": ["تجيئين"], "pres:2d": ["تجيئان"], "pres:2mp": ["تجيئون"], "pres:2fp": ["تجئن"], "pres:1s": ["أجيء"], "pres:1p": ["نجيء"],
+    "subj:3ms": ["يجيء"], "subj:3fs": ["تجيء"], "subj:3md": ["يجيئا"], "subj:3fd": ["تجيئا"], "subj:3mp": ["يجيئوا"], "subj:3fp": ["يجئن"],
+    "subj:2ms": ["تجيء"], "subj:2fs": ["تجيئي"], "subj:2d": ["تجيئا"], "subj:2mp": ["تجيئوا"], "subj:2fp": ["تجئن"], "subj:1s": ["أجيء"], "subj:1p": ["نجيء"],
+    "juss:3ms": ["يجئ"], "juss:3fs": ["تجئ"], "juss:3md": ["يجيئا"], "juss:3fd": ["تجيئا"], "juss:3mp": ["يجيئوا"], "juss:3fp": ["يجئن"],
+    "juss:2ms": ["تجئ"], "juss:2fs": ["تجيئي"], "juss:2d": ["تجيئا"], "juss:2mp": ["تجيئوا"], "juss:2fp": ["تجئن"], "juss:1s": ["أجئ"], "juss:1p": ["نجئ"],
+    "imp:2ms": ["جئ"], "imp:2fs": ["جيئي"], "imp:2d": ["جيئا"], "imp:2mp": ["جيئوا"], "imp:2fp": ["جئن"],
   },
 };
 
-/** ra'aa (saw): the past is regular for a verb ending in ى, the present drops the hamza (يرى). */
+/** ra'aa (saw): the past is regular, the present drops the hamza (يرى), and before a pronoun ending the stem is ر. */
 const RAA: VerbEntry = {
   root: "رأي", lemma: "رَأَى", gloss: "see", cls: "defective", weak: "ي",
   overrides: {
-    "pres:3ms": ["يرى"], "pres:3fs": ["ترى"], "pres:2ms": ["ترى"], "pres:1s": ["أرى"], "pres:1p": ["نرى"],
-    "pres:3mp": ["يرون"], "pres:2mp": ["ترون"], "pres:2fs": ["ترين"], "pres:3fp": ["يرين"], "pres:2fp": ["ترين"],
+    "pres:3ms": ["يرى"], "pres:3fs": ["ترى"], "pres:3md": ["يريان"], "pres:3fd": ["تريان"], "pres:3mp": ["يرون"], "pres:3fp": ["يرين"],
+    "pres:2ms": ["ترى"], "pres:2fs": ["ترين"], "pres:2d": ["تريان"], "pres:2mp": ["ترون"], "pres:2fp": ["ترين"], "pres:1s": ["أرى"], "pres:1p": ["نرى"],
+    "subj:3ms": ["يرى"], "subj:3fs": ["ترى"], "subj:3md": ["يريا"], "subj:3fd": ["تريا"], "subj:3mp": ["يروا"], "subj:3fp": ["يرين"],
+    "subj:2ms": ["ترى"], "subj:2fs": ["تري"], "subj:2d": ["تريا"], "subj:2mp": ["تروا"], "subj:2fp": ["ترين"], "subj:1s": ["أرى"], "subj:1p": ["نرى"],
+    "juss:3ms": ["ير"], "juss:3fs": ["تر"], "juss:3md": ["يريا"], "juss:3fd": ["تريا"], "juss:3mp": ["يروا"], "juss:3fp": ["يرين"],
+    "juss:2ms": ["تر"], "juss:2fs": ["تري"], "juss:2d": ["تريا"], "juss:2mp": ["تروا"], "juss:2fp": ["ترين"], "juss:1s": ["أر"], "juss:1p": ["نر"],
+    "imp:2ms": ["ر"], "imp:2fs": ["ري"], "imp:2d": ["ريا"], "imp:2mp": ["روا"], "imp:2fp": ["رين"],
     "past:3mp": ["رأوا"],
   },
 };
 
+/**
+ * Forms of a verb whose last radical is a hamza (قرأ، بدأ) that the generator would spell wrongly: the hamza sits on a waw before
+ * ـون / ـوا (يقرؤون), on a yaa' before ـين / ـي (تقرئين), and on an alef before the dual ـان (يقرآن). `r` = the first two radicals.
+ */
+function HAMZA_FINAL(r: string): NonNullable<VerbEntry["overrides"]> {
+  return {
+    "pres:3mp": [`ي${r}ؤون`, `ي${r}أون`], "pres:2mp": [`ت${r}ؤون`, `ت${r}أون`], "pres:2fs": [`ت${r}ئين`],
+    "subj:3mp": [`ي${r}ؤوا`, `ي${r}أوا`], "subj:2mp": [`ت${r}ؤوا`, `ت${r}أوا`], "subj:2fs": [`ت${r}ئي`],
+    "juss:3mp": [`ي${r}ؤوا`, `ي${r}أوا`], "juss:2mp": [`ت${r}ؤوا`, `ت${r}أوا`], "juss:2fs": [`ت${r}ئي`],
+    "imp:2fs": [`ا${r}ئي`], "imp:2mp": [`ا${r}ؤوا`, `ا${r}أوا`], "imp:2d": [`ا${r}آ`],
+    "past:3mp": [`${r}ؤوا`, `${r}أوا`],
+    "pres:3md": [`ي${r}آن`], "pres:3fd": [`ت${r}آن`], "pres:2d": [`ت${r}آن`],
+    "subj:3md": [`ي${r}آ`], "subj:3fd": [`ت${r}آ`], "subj:2d": [`ت${r}آ`],
+    "juss:3md": [`ي${r}آ`], "juss:3fd": [`ت${r}آ`], "juss:2d": [`ت${r}آ`],
+  };
+}
+
 const sound = (root: string, lemma: string, gloss: string, extra: Partial<VerbEntry> = {}): VerbEntry => ({ root, lemma, gloss, cls: "sound", ...extra });
 
 /** قرأ: the hamza is written on a waw in the plural (قَرَؤُوا), which the generator can't know. */
-const QARA: VerbEntry = sound("قرأ", "قَرَأَ", "read", { overrides: { "past:3mp": ["قرؤوا", "قرأوا"] } });
+const QARA: VerbEntry = sound("قرأ", "قَرَأَ", "read", { overrides: HAMZA_FINAL("قر") });
 const AKHADHA: VerbEntry = sound("أخذ", "أَخَذَ", "take", { overrides: { "imp:2ms": ["خذ"], "imp:2fs": ["خذي"], "imp:2d": ["خذا"], "imp:2mp": ["خذوا"], "imp:2fp": ["خذن"] } });
 const AKALA: VerbEntry = sound("أكل", "أَكَلَ", "eat", { overrides: { "imp:2ms": ["كل"], "imp:2fs": ["كلي"], "imp:2d": ["كلا"], "imp:2mp": ["كلوا"], "imp:2fp": ["كلن"] } });
 
@@ -254,7 +285,7 @@ export const book2Lessons: Lesson[] = [
     title: "The present tense (he, she, you, I), and numbers 21-30",
     newVocab: [
       "دَائِمًا", "أَحْيَانًا", "مَرَّةً", "أُخْرَى", "عَامِلٌ", "عُمَّالٌ", "مَصْنَعٌ", "مُبَكِّرًا", "مُتَأَخِّرًا", "إِلَّا", "طُولٌ", "عَرْضٌ",
-      "مَسَافَةٌ", "كِيلُومِتْرٌ", "سَنْتِيمِتْرٌ", "مِتْرٌ", "أَمْتَارٌ", "عَمَلٌ", "مُهَنْدِسَانِ", "ثَلَاثُونَ", "اِثْنَانِ",
+      "مَسَافَةٌ", "كِيلُومِتْرٌ", "سَنْتِيمِتْرٌ", "مِتْرٌ", "أَمْتَارٌ", "عَمَلٌ", "مُهَنْدِسَانِ", "ثَلَاثُونَ", "اِثْنَانِ", "غَدًا", "أَمْسِ", "عَنْ",
     ],
     verbs: [
       sound("عمل", "عَمِلَ", "work"),
@@ -273,6 +304,442 @@ export const book2Lessons: Lesson[] = [
       "Numbers 21-30 with a masculine counted noun: واحد وعشرون طالبا … ثلاثون طالبا",
       "Condition with the accusative: مبكّرا (early) and متأخّرا (late): يرجع متأخرا",
       "Measurement: طول، عرض، مسافة، متر، كيلومتر، سنتيمتر",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 11,
+    title: "The present tense for they and you (plural); the future; at university",
+    newVocab: [
+      "قَرِيبٌ", "أَقْرِبَاءُ", "عُنْوَانٌ", "عَنَاوِينُ", "بِطَاقَةٌ", "بِطَاقَاتٌ", "رِسَالَةٌ", "رَسَائِلُ", "ثَوْبٌ", "ثِيَابٌ", "مَحَطَّةٌ", "مَحَطَّاتٌ",
+      "حَلَّاقٌ", "حَلَّاقُونَ", "صَيْدَلِيَّةٌ", "أَرُزٌّ", "خَيْلٌ", "خُيُولٌ", "مَهَاجِعُ", "الْآدَابُ", "الْعُلُومُ", "طَبْعًا", "سَائِقٌ",
+      "سَوْفَ", "أَمَّا", "أَمَانٌ", "دُخُولٌ", "خُرُوجٌ", "نُزُولٌ", "جُلُوسٌ", "صُعُودٌ", "رُكُوبٌ", "رُجُوعٌ", "ذَهَابٌ",
+    ],
+    newAdjectives: ["قَادِمٌ"],
+    verbs: [
+      sound("درس", "دَرَسَ", "study"),
+      sound("سكن", "سَكَنَ", "live"),
+      sound("صعد", "صَعِدَ", "go up"),
+      sound("عرف", "عَرَفَ", "know"),
+      { root: "موت", lemma: "مَاتَ", gloss: "die", cls: "hollow", weak: "و" },
+      sound("شكر", "شَكَرَ", "thank"),
+      { root: "نسي", lemma: "نَسِيَ", gloss: "forget", cls: "defective", weak: "ي", kasraPast: true },
+    ],
+    verbSlots: slots("pres:3mp", "pres:3fp", "pres:2mp"),
+    newAffixes: { prefixes: ["س", "ف"] },
+    newGrammar: [
+      "The present tense for they and you (plural): يدرسون (they, m.)، يدرسن (they, f.)، تدرسون (you, m. pl.): أين تسكنون؟ إخوتي يسكنون في مهاجع الجامعة",
+      "Which college and which year: في أيّ كلية تدرس؟ في أيّ سنة؟ — كلية الهندسة، الآداب، العلوم، الطب، التجارة؛ السنة الأولى، الثانية",
+      "The future with سـ or سوف in front of the present: سأذهب، سيرجع، سوف أكتب",
+      "The verbal noun (مصدر): دخول، خروج، جلوس، نزول، صعود، ركوب، رجوع، ذهاب — used after a preposition: خرجتُ للذهاب إلى المدير",
+      "أمّا … فـ … (as for …): أمّا أنا فأسكن مع قريب لي",
+      "أحد + a plural: 'one of …' — أخ لي = أحد إخواني",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 12,
+    title: "The present tense for you (f.), you (f. pl.) and we; days of the week",
+    newVocab: [
+      "دَوَاءٌ", "أَدْوِيَةٌ", "وَاجِبٌ", "وَاجِبَاتٌ", "تِلْمِيذٌ", "تَلَامِيذُ", "تِلْمِيذَةٌ", "تِلْمِيذَاتٌ", "رَقْمٌ", "أَرْقَامٌ", "هَاتِفٌ", "هَوَاتِفُ", "وَقْتٌ", "أَوْقَاتٌ",
+      "أَعْمَالٌ", "جَارٌ", "جِيرَانٌ", "جَارَةٌ", "خَارِجِيَّةٌ", "السَّبْتُ", "الْأَحَدُ", "الِاثْنَيْنِ", "الثُّلَاثَاءُ", "الْأَرْبِعَاءُ", "الْخَمِيسُ", "الْجُمُعَةُ",
+    ],
+    verbs: [sound("ضحك", "ضَحِكَ", "laugh")],
+    verbSlots: slots("pres:2fs", "pres:2fp", "pres:1p"),
+    newGrammar: [
+      "The rest of the present: you (f.) تذهبين، تفعلين؛ you (f. pl.) تذهبن، تلعبن؛ we نلعب، نفهم، نكتب",
+      "إنّ after قال and at the start of a sentence; أنّ after other verbs: قال إنه طبيب، أظنّ أنه طبيب، سمعت أنها مريضة",
+      "The days of the week: السبت، الأحد، الاثنين، الثلاثاء، الأربعاء، الخميس، الجمعة — with يوم: يوم الأحد",
+      "Everyday talk: ماذا تفعلين؟ أبحث عن الدواء؛ متى تذهبين؟ سأذهب بعد ساعة إن شاء الله",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 13,
+    title: "The present tense with every pronoun (review)",
+    newVocab: ["صَفٌّ", "صُفُوفٌ", "أَخِيرٌ", "أُجْرَةٌ"],
+    newGrammar: [
+      "The full table of the present (no dual yet): هو يذهب، هي تذهب، أنتَ تذهب، أنتِ تذهبين، أنا أذهب، هم يذهبون، هنّ يذهبن، أنتم تذهبون، أنتنّ تذهبن، نحن نذهب",
+      "The present verb always starts with a letter that shows who: ي (he / they), ت (she / you), أ (I), ن (we); the ending shows number and gender",
+      "سيارة الأجرة (a taxi), الصفّ الأخير (the last row)",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 14,
+    title: "Commands",
+    newVocab: [
+      "عَقْرَبٌ", "عَقَارِبُ", "حِذَاءٌ", "أَحْذِيَةٌ", "أَكْوَابٌ", "صَوْتٌ", "أَصْوَاتٌ", "أَيْدٍ", "غَرِيبٌ", "غُرَبَاءُ", "مِذْيَاعٌ", "جَوٌّ", "وَرَقَةٌ",
+      "مُظْلِمٌ", "نَعْسَانُ", "نَعْسَى", "تَعَالَ", "تَعَالَيْ", "تَعَالَوْا", "تَعَالَيْنَ",
+    ],
+    verbs: [
+      sound("كنس", "كَنَسَ", "sweep"),
+      sound("سكت", "سَكَتَ", "be quiet"),
+      sound("نظر", "نَظَرَ", "look"),
+      sound("جمع", "جَمَعَ", "gather"),
+      sound("قطع", "قَطَعَ", "cut"),
+      sound("طبخ", "طَبَخَ", "cook"),
+      sound("حلق", "حَلَقَ", "shave"),
+      sound("علم", "عَلِمَ", "know"),
+      sound("منع", "مَنَعَ", "forbid"),
+    ],
+    verbSlots: slots("imp:2ms", "imp:2fs", "imp:2mp", "imp:2fp"),
+    newGrammar: [
+      "The command (أمر) is the present without its prefix: تكتب → اكتب، تجلس → اجلس، تذهب → اذهب، تقرأ → اقرأ — with an alef in front when the first letter has no vowel",
+      "To a woman add ـي: اكتبي، اذهبي؛ to several men ـوا: اكتبوا، اذهبوا؛ to several women ـنَ: اكتبن، اذهبن",
+      "Irregular: خذ (take), كل (eat), تعال (come)؛ and مُر",
+      "Everyday commands: اجلس هنا، انظر إلى السبورة، اغسل وجهك، افتح النافذة، اذهب إلى الحمام، لا — see the next lesson for 'don't'",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 15,
+    title: "Don't!: the negative command, and 'almost'",
+    newVocab: ["مَقْعَدٌ", "مَقَاعِدُ", "أَبَتِ", "أَثْنَاءٌ", "غَائِبٌ", "إِنَّمَا"],
+    newVerbs: ["اِنْقَلَبَ", "اِنْقَلَبَتْ"],
+    verbs: [
+      sound("كذب", "كَذَبَ", "lie"),
+      { root: "بكي", lemma: "بَكَى", gloss: "cry", cls: "defective", weak: "ي" },
+      { root: "كود", lemma: "كَادَ", gloss: "almost", cls: "hollow", weak: "ا" },
+    ],
+    verbSlots: slots("juss:2ms", "juss:2fs", "juss:2mp", "juss:2fp"),
+    newGrammar: [
+      "A negative command is لا + the present: لا تذهب، لا تأكلها، لا تكتب بالقلم الأحمر، لا تقرأ هنا — to a woman لا تذهبي، to several men لا تذهبوا، to several women لا تذهبن",
+      "Two uses of لا: the command لا تفعلْ ('don't') and the plain denial لا يفعلُ ('he doesn't'). ما negates what is happening now: ما أشرب القهوة الآن",
+      "كاد (almost): كاد يخرج، يكاد الجرس يرنّ — كاد + the present",
+      "ألا + the present for a gentle question: ألا تذهب إلى الملعب؟",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 16,
+    title: "Wanting, colours (feminine), another, and 'what' that joins",
+    newVocab: [
+      "أَشْيَاءُ", "قُمَاشٌ", "أَقْمِشَةٌ", "نَمُوذَجٌ", "نَمَاذِجُ", "حَلْوَى", "حَلَاوَى", "مُسَطَّرٌ", "غَيْرُ", "آخَرُ", "ضَيِّقٌ", "مِلَفٌّ", "زَهْرَةٌ",
+      "شَعْرٌ", "عُمَرُ", "عَمْرٌو", "حَفْصَةُ", "حُسَيْنٌ", "ذَا",
+      "حَمْرَاءُ", "سَوْدَاءُ", "بَيْضَاءُ", "خَضْرَاءُ", "زَرْقَاءُ", "صَفْرَاءُ", "سَمْرَاءُ",
+    ],
+    newAdjectives: ["أَسْمَرُ"],
+    verbs: [
+      { root: "رود", lemma: "أَرَادَ", gloss: "want", cls: "hollow", form: 4 },
+      { root: "غيب", lemma: "غَابَ", gloss: "be absent", cls: "hollow", weak: "ي" },
+      { root: "شري", lemma: "اِشْتَرَى", gloss: "buy", cls: "defective", weak: "ي", form: 8 },
+    ],
+    newGrammar: [
+      "أريد + a noun: أريد قلماً، أريد دفتراً — and with every person: تريد، يريد، تريدين، يريدون، يردن، نريد",
+      "Colours have a feminine form in أ…اء → …اء: أحمر ↔ حمراء، أسود ↔ سوداء، أبيض ↔ بيضاء، أخضر ↔ خضراء، أزرق ↔ زرقاء، أصفر ↔ صفراء، أسمر ↔ سمراء — قلم أحمر، حقيبة حمراء",
+      "ما (what / that which) joins a statement: آكل ما تأكل، سأشتري ما تريد، افهم ما تقول",
+      "آخر (m.) / أخرى (f.) = another: حقيبة أخرى، طالب آخر",
+      "غير + a noun = not …: ورق غير مسطّر (unlined paper); ذو / ذا + a description: دفتر ذو ورق مسطّر",
+      "عمر and عمرو are two different names, written differently",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 17,
+    title: "'To …' and 'in order to': the subjunctive, and the seasons",
+    newVocab: [
+      "عُطْلَةٌ", "الْعَامُ", "الذُّبَابُ", "هُدُوءٌ", "إِعْلَانٌ", "أَهْلٌ", "ظَرْفٌ", "ظُرُوفٌ", "ضَوْضَاءُ", "عَشَاءٌ", "عِلَاجٌ",
+      "الشِّتَاءُ", "الرَّبِيعُ", "الصَّيْفُ", "الْخَرِيفُ", "مُنْذُ",
+    ],
+    newAdjectives: ["مُقْبِلٌ"],
+    verbs: [
+      { root: "زور", lemma: "زَارَ", gloss: "visit", cls: "hollow", weak: "و" },
+      sound("بدأ", "بَدَأَ", "begin", { overrides: HAMZA_FINAL("بد") }),
+      sound("سمح", "سَمَحَ", "allow"),
+      sound("مكن", "أَمْكَنَ", "be possible", { form: 4 }),
+      { root: "بقي", lemma: "بَقِيَ", gloss: "remain", cls: "defective", weak: "ي", kasraPast: true },
+      sound("بصق", "بَصَقَ", "spit"),
+      { root: "رجو", lemma: "رَجَا", gloss: "hope", cls: "defective", weak: "و" },
+    ],
+    verbSlots: slots("subj:3ms", "subj:3fs", "subj:2ms", "subj:1s", "subj:1p"),
+    newGrammar: [
+      "After أنْ the present drops its final ـُ and ends in ـَ: أريد أن أذهبَ، يمكنك أن تجلسَ، أرجو أن تسمحَ لي",
+      "The subjunctive follows: أراد، يريد، أرجو، يمكن، نسي، بدأ — and the 'in order to' ـلـ: خرجتُ لأشربَ الماء، ذهبتُ لأزورَ أخي",
+      "منذ (since / for) with a time: غائب منذ أسبوع، أعرفه منذ سنتين",
+      "The seasons: الشتاء، الربيع، الصيف، الخريف؛ العام المقبل (next year); عطلة الصيف",
+      "يرى / ترى / أرى / نرى (see): أرى قلماً وكتاباً",
+      "أرجو أن تسمح لي بـ… (may I…?): أرجو أن تسمح لي بالخروج",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 18,
+    title: "The subjunctive with every pronoun; 'like'",
+    newVocab: [
+      "مُتْحَفٌ", "مَتَاحِفُ", "عَادَةٌ", "عَادَاتٌ", "عُلْبَةٌ", "عُلَبٌ", "مَلَابِسُ", "حَيَوَانٌ", "حَيَوَانَاتٌ", "عِيَادَةٌ", "هَيَّا", "الْمَغْرِبُ",
+    ],
+    verbs: [{ root: "حبب", lemma: "أَحَبَّ", gloss: "love", cls: "doubled", form: 4 }],
+    verbSlots: slots("subj:3mp", "subj:2mp", "subj:2fs", "subj:3fp", "subj:2fp"),
+    newAffixes: { prefixes: ["ك"] },
+    newGrammar: [
+      "After أن the five verbs lose their final ن: تريدون أن تذهبوا؛ تريدين أن تذهبي؛ يريدون أن يشتروا — the feminine plural keeps its ن: يردن أن يذهبن",
+      "أرجو ألّا تأخذن (ألّا = أن + لا): I hope you won't take",
+      "The letter كـ means 'like': هذه المدرسة كالمسجد، هذه القهوة كالماء، ساعتي كساعتك",
+      "Going with others: هيا بنا (let's go)",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 19,
+    title: "Will not: لن, and how to deny the past, present and future",
+    newVocab: [
+      "لَنْ", "آسِفٌ", "سَفَارَةٌ", "أَعْوَامٌ", "هِنْدِيٌّ", "هُنُودٌ", "حَرِيرٌ", "الدُّنْيَا", "مُسْتَقْبَلٌ", "بَدْءٌ", "أَبَدًا", "عِنْدَمَا", "مَصَارِفُ",
+      "أَيُّوبُ", "جَعْفَرٌ",
+    ],
+    newAdjectives: ["مَوْجُودٌ", "مُتْعَبٌ"],
+    verbs: [sound("لبس", "لَبِسَ", "wear"), sound("ترك", "تَرَكَ", "leave"), sound("صبر", "صَبَرَ", "be patient")],
+    newGrammar: [
+      "لن + the subjunctive denies the future: لن أذهب إلى الهند، لن يرجع خالد، لن أترك الصلاة أبداً",
+      "Three ways to say 'not': the past with ما (ما ذهبتُ أمس)، the present with لا (لا أذهب كل يوم)، the future with لن (لن أذهب غداً)",
+      "Polite regret: أنا آسف يا أستاذ — إنّي آسف",
+      "أبدًا (never, future) and عندما (when)",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 20,
+    title: "Two of something in every case; 'one of the two'",
+    newVocab: [
+      "مُشْطٌ", "أَمْشَاطٌ", "مِخَدَّةٌ", "مَخَادُّ", "زِرٌّ", "أَزْرَارٌ", "مِرْآةٌ", "مَرَايَا", "لِصٌّ", "لُصُوصٌ", "جُنَيْهٌ", "جُنَيْهَاتٌ",
+      "أَحَدُهُمَا", "الْآخَرُ", "إِحْدَاهُمَا", "الْأُخْرَى", "رِيَالَيْنِ",
+    ],
+    newAdjectives: ["مُفِيدٌ"],
+    verbs: [
+      sound("ذبح", "ذَبَحَ", "slaughter"),
+      sound("شرح", "شَرَحَ", "explain"),
+      { root: "كفي", lemma: "كَفَى", gloss: "be enough", cls: "defective", weak: "ي" },
+    ],
+    newAffixes: { suffixes: ["ين", "تين", "كما", "هما"] },
+    newGrammar: [
+      "The dual in the object and after a preposition ends in ـيْن / ـتَيْن: رأيتُ المدرسَيْن، ذهبتُ إلى المدرسَيْن، اشتريتُ قلمَيْن — in the subject it is ـان / ـتان: جاء المدرسان",
+      "After كم you may answer with the dual: كم أخاً لك؟ — أخوان",
+      "أحدهما … والآخر … (one of the two … and the other …) for a masculine pair; إحداهما … والأخرى … for a feminine pair",
+      "ذو + a dual: قلم ذو اللونين (a two-colour pen), قميص ذو الجيبين",
+      "Buying things: بكم اشتريتَه؟ — بريالين (for two riyals)",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 21,
+    title: "Not yet: لم and لمّا; noun sentence and verb sentence",
+    newVocab: [
+      "اِسْتِقْبَالٌ", "فَرْقٌ", "فُرُوقٌ", "رَئِيسٌ", "رُؤَسَاءُ", "مِثَالٌ", "أَمْثِلَةٌ", "مَهْلًا", "قِسْمٌ", "أَقْسَامٌ", "الْجُمْلَةُ", "الْفِعْلُ",
+      "الْفَاعِلُ", "الْمُبْتَدَأُ", "الْخَبَرُ", "الِاسْمُ", "هَارُونُ", "اللَّائِي", "لَمْ", "لَمَّا", "جُمْلَةٌ", "اِسْمِيَّةٌ", "فِعْلِيَّةٌ",
+    ],
+    newVerbs: ["اِسْتَرِيحُوا"],
+    verbs: [sound("حضر", "حَضَرَ", "attend"), { root: "أتي", lemma: "أَتَى", gloss: "come", cls: "defective", weak: "ي", overrides: { "imp:2ms": ["ائت"], "imp:2fs": ["ائتي"], "imp:2mp": ["ائتوا"], "imp:2fp": ["ائتين"] } }],
+    verbSlots: slots("juss:3ms", "juss:3fs", "juss:3mp", "juss:3fp", "juss:1s", "juss:1p"),
+    newGrammar: [
+      "لم + the present (it ends in a sukun) denies the past: لم يذهبْ = ما ذهب، لم أكتبْ، لم تفهمْ — the five verbs lose their ن: لم يذهبوا، لم تذهبي",
+      "لمّا + the present = 'not yet': لمّا يحضرْ (he has not come yet); لمّا alone as an answer: أحضر المدير؟ — لمّا",
+      "A noun sentence begins with a noun (the مبتدأ and its خبر): السيارة جميلة. A verb sentence begins with a verb (الفعل then الفاعل): خرج المدرس",
+      "The three kinds of word: اسم، فعل، حرف",
+      "اللائي (= اللاتي) for 'who' of several women",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 22,
+    title: "The three states of the present (review)",
+    newVocab: [],
+    newGrammar: [
+      "One verb in its three states: the plain present (يذهبُ), after لن (لن يذهبَ) and after لم (لم يذهبْ) — with the same person endings",
+      "The five verbs (يفعلان، يفعلون، تفعلين …) keep ن in the plain present and lose it after لن and لم",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 23,
+    title: "Several men in every case; the tens; 'neither … nor'",
+    newVocab: [
+      "اِجْتِمَاعٌ", "قِصَّةٌ", "قِصَصٌ", "أَنْبِيَاءُ", "ثَانِيَةٌ", "ثَوَانٍ", "أُسْرَةٌ", "أُسَرٌ", "جَائِزَةٌ", "جَوَائِزُ", "قَاعَةٌ", "قَاعَاتٌ",
+      "أَرْبَعُونَ", "خَمْسُونَ", "سِتُّونَ", "سَبْعُونَ", "ثَمَانُونَ", "تِسْعُونَ",
+    ],
+    verbs: [sound("نجح", "نَجَحَ", "succeed"), sound("رسب", "رَسَبَ", "fail")],
+    newGrammar: [
+      "The masculine sound plural ends in ـون as a subject and ـين otherwise: جاء المدرسون / رأيتُ المدرسين / ذهبتُ إلى المدرسين; before a second noun it loses its ن: أبناء المدرسين",
+      "The tens: عشرون، ثلاثون، أربعون … تسعون — they end in ـين in the object or after a preposition: رأيتُ ثلاثين طالباً",
+      "Numbers 21-99: واحد وعشرون، اثنان وثلاثون … — the counted noun is a singular accusative: خمسة وعشرون طالباً",
+      "لا + the past, repeated, means 'neither … nor': لا أكلتُ ولا شربتُ",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 24,
+    title: "Numbers: hundreds and thousands",
+    newVocab: [
+      "مِائَتَانِ", "مِائَتَا", "ثَلَاثُمِائَةٍ", "أَرْبَعُمِائَةٍ", "خَمْسُمِائَةٍ", "سِتُّمِائَةٍ", "سَبْعُمِائَةٍ", "ثَمَانِمِائَةٍ", "تِسْعُمِائَةٍ",
+      "أَلْفَانِ", "آلَافٌ",
+    ],
+    newGrammar: [
+      "The rules for the counted noun: 1-2 agree with it (طالب واحد، طالبتان)؛ 3-10 take the opposite gender and a plural noun in the genitive (ثلاثة طلاب، ثلاث طالبات)؛ 11-12 agree in both parts; 13-19 first part opposite and second part agrees (ثلاثة عشر طالباً، ثلاث عشرة طالبة)؛ 11-99 take a singular accusative noun; 100 and 1000 take a singular genitive noun (مائة طالب، ألف طالب)",
+      "Hundreds: مائة، مائتان، ثلاثمائة، أربعمائة … تسعمائة؛ thousands: ألف، ألفان، ثلاثة آلاف … عشرة آلاف، مائة ألف",
+      "Putting it together: ثلاثة وأربعون وخمسمائة وستة آلاف ريال",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 25,
+    title: "Was and still is: كان and زال, and 'father' / 'brother' in every case",
+    newVocab: [
+      "سَفِيرٌ", "سُفَرَاءُ", "شُرْطِيٌّ", "شُرْطَةٌ", "عَمِيدٌ", "عُمَدَاءُ", "مَرْضَى", "أَنْحَاءٌ", "جَمِيعٌ", "أَبَا", "أَخَا", "أَنْوَرُ", "أَخْتَرُ",
+    ],
+    newAdjectives: ["مُتَقَاعِدٌ"],
+    verbs: [{ root: "زول", lemma: "زَالَ", gloss: "cease", cls: "hollow", weak: "ا" }],
+    newGrammar: [
+      "كان (was) takes a subject in the nominative and a predicate in the accusative: كان حامدٌ مريضاً، كانت زينبُ طالبةً — in the present: يكون",
+      "ما زال / لا يزال (still): لا يزال إبراهيم نائماً، لا تزال آمنة مريضة",
+      "The five nouns: أبو / أخو change with the case — جاء أبوك، رأيتُ أباك، قلتُ لأبيك؛ أخوه، أخاه، لأخيه",
+      "Jobs: سفير، شرطي، عميد، موجّه، وزير — كان مدرساً من قبل وهو الآن موجّه",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 26,
+    title: "Verbs that start with و, small things, and 'here he is'",
+    newVocab: [
+      "وُلَيْدٌ", "جُبَيْلٌ", "نُهَيْرٌ", "كُلَيْبٌ", "رُجَيْلٌ", "طُفَيْلٌ", "نُجَيْمٌ", "أَقَلُّ", "أَشَدُّ", "أَلَذُّ", "أَحَبُّ", "هَا", "ذِي", "أَجْنَبِيٌّ", "مَحْفَظَةٌ",
+      "نَقْدٌ", "نُقُودٌ", "خَطَأٌ", "أَخْطَاءُ", "إِيَابٌ", "تَذْكِرَةٌ", "تَذَاكِرُ", "قُرْصٌ", "أَقْرَاصٌ", "كِيلُوغْرَامٌ", "أُنْثَى", "إِنَاثٌ", "ذَكَرٌ",
+      "ذُكُورٌ", "انْتِظَامٌ", "بِسُرْعَةٍ",
+    ],
+    newVerbs: ["يَنْبَغِي"],
+    verbs: [
+      sound("وصل", "وَصَلَ", "arrive", { cls: "assimilated" }),
+      sound("وزن", "وَزَنَ", "weigh", { cls: "assimilated" }),
+      sound("وعد", "وَعَدَ", "promise", { cls: "assimilated" }),
+      sound("وهب", "وَهَبَ", "give", { cls: "assimilated" }),
+      sound("وجب", "وَجَبَ", "be necessary", { cls: "assimilated" }),
+      sound("وقف", "وَقَفَ", "stop", { cls: "assimilated" }),
+      sound("عرج", "عَرِجَ", "limp"),
+      sound("بلع", "بَلَعَ", "swallow"),
+    ],
+    newGrammar: [
+      "Verbs whose first letter is و lose it in the present and in the command: وصل → يصل، صِلْ؛ وجد → يجد؛ وضع → يضع، ضَعْ؛ وقف → يقف، قِفْ؛ وجب → يجب",
+      "يجب على + a pronoun + أن: يجب عليك أن تذهب، يجب علينا أن نكتب (must)",
+      "The small form (تصغير): وليد، جبيل، نهير، كليب — 'a little boy, a little mountain, a little river, a little dog'",
+      "'More than' for a doubled adjective: أقلّ، أشدّ، ألذّ، أحبّ — أبي حبيب إليّ وأمي أحبّ إليّ منه",
+      "هذا هو ذا / ها هو ذا (here he is), ها هي ذي (here she is), ها أنا ذا (here I am)",
+      "Money and things: نقود، محفظة، تذكرة، قرص، كيلوغرام، ذكر / أنثى، ذهاب وإياب (round trip)",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 27,
+    title: "Verbs with a long vowel in the middle (hollow verbs)",
+    newVocab: [
+      "كَامِلٌ", "صُدَاعٌ", "مَشْغُولٌ", "الْمِلْحُ", "الزَّيْتُ", "الْجُبْنُ", "الدَّقِيقُ", "الْعَدَسُ", "بَيْضٌ", "الْغَابَةُ", "الْقِطَارُ", "الْبُخَارُ",
+      "الْفَاكِهَانِيُّ", "الْغَدَاءُ", "مُنْتَصَفُ", "لَيْلٌ", "حَيْثُ", "الْأَسَدُ",
+    ],
+    verbs: [
+      { root: "ذوق", lemma: "ذَاقَ", gloss: "taste", cls: "hollow", weak: "و" },
+      { root: "صوم", lemma: "صَامَ", gloss: "fast", cls: "hollow", weak: "و" },
+      { root: "دور", lemma: "دَارَ", gloss: "turn", cls: "hollow", weak: "و" },
+      { root: "توب", lemma: "تَابَ", gloss: "repent", cls: "hollow", weak: "و" },
+      { root: "بيع", lemma: "بَاعَ", gloss: "sell", cls: "hollow", weak: "ي" },
+      { root: "سير", lemma: "سَارَ", gloss: "walk", cls: "hollow", weak: "ي" },
+      { root: "عيش", lemma: "عَاشَ", gloss: "live", cls: "hollow", weak: "ي" },
+      { root: "كيل", lemma: "كَالَ", gloss: "measure", cls: "hollow", weak: "ي" },
+      { root: "نوم", lemma: "نَامَ", gloss: "sleep", cls: "hollow", weak: "ا" },
+      { root: "خوف", lemma: "خَافَ", gloss: "fear", cls: "hollow", weak: "ا" },
+      sound("غلب", "غَلَبَ", "overcome"),
+    ],
+    newVerbs: ["يَنْبَغِي"],
+    newGrammar: [
+      "A verb with a long vowel in the middle (قال، باع، نام، زار، كان) shortens it before a subject that begins with a consonant: قلتُ، بعتُ، نمتُ، زرتُ، كنتُ — and before نَ and نا: قلنَ، قلنا",
+      "The same verbs lose the long vowel in the jussive and the command: لم يقل، قُل؛ لم يبع، بِع؛ لم ينم، نَم؛ لم يزر، زُر؛ لم يكن، كن",
+      "Fear and sleep: خفتُ، أخاف، لا تخف؛ نمتُ، أنام، لا تنم",
+      "حيث (where) and ينبغي (it is fitting): لا ينبغي لطالب أن يغيب كثيراً",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 28,
+    title: "Verbs that end in a weak letter (defective verbs)",
+    newVocab: [
+      "الْيَمِينُ", "الْيَسَارُ", "تَنَاوُلٌ", "التَّحْقِيقُ", "قَوْمٌ", "اللَّيْلُ", "النَّهَارُ", "تُرَابٌ", "صَاحِبٌ", "أَصْحَابٌ", "هَدِيَّةٌ", "مُمَزَّقٌ",
+    ],
+    verbs: [
+      { root: "جري", lemma: "جَرَى", gloss: "run", cls: "defective", weak: "ي" },
+      { root: "رمي", lemma: "رَمَى", gloss: "throw", cls: "defective", weak: "ي" },
+      { root: "بني", lemma: "بَنَى", gloss: "build", cls: "defective", weak: "ي" },
+      { root: "سقي", lemma: "سَقَى", gloss: "give to drink", cls: "defective", weak: "ي" },
+      { root: "دعو", lemma: "دَعَا", gloss: "call", cls: "defective", weak: "و" },
+      { root: "شكو", lemma: "شَكَا", gloss: "complain", cls: "defective", weak: "و" },
+      { root: "محو", lemma: "مَحَا", gloss: "erase", cls: "defective", weak: "و" },
+      { root: "عفو", lemma: "عَفَا", gloss: "pardon", cls: "defective", weak: "و" },
+      { root: "خشي", lemma: "خَشِيَ", gloss: "fear", cls: "defective", weak: "ي", kasraPast: true },
+      { root: "طوي", lemma: "طَوَى", gloss: "fold", cls: "defective", weak: "ي" },
+      sound("تبع", "تَبِعَ", "follow"),
+      sound("وقع", "وَقَعَ", "fall", { cls: "assimilated" }),
+    ],
+    newGrammar: [
+      "A verb that ends in و or ي: دعا → يدعو، رمى → يرمي، مشى → يمشي، بكى → يبكي، نسي → ينسى، بقي → يبقى",
+      "In the past the weak letter shows before a subject ending: دعوتُ، رميتُ، مشيتُ، بكيتُ، نسيتُ، خشيتُ؛ دَعَوا، مَشَوا، بَكَوا؛ دَعَتْ، مَشَتْ",
+      "In the jussive and the command the weak ending drops: لم يدعُ، لم يرمِ، لم يمشِ، لم يبكِ؛ ادعُ، ارمِ، امشِ، ابكِ — and with لا: لا ترمِ",
+      "Showing someone something: أرني (show me), ما هذا بيمينك؟ — خذ هذا بيمينك",
+      "Everyday: أكوي الثياب، تجري في الشارع، يبني بيتاً، أدعوهم لتناول العشاء، أشكو إلى المدير",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 29,
+    title: "Verbs with a doubled letter (doubled verbs)",
+    newVocab: [
+      "نُسْخَةٌ", "نُسَخٌ", "مَرَّاتٌ", "كَفٌّ", "أَكُفٌّ", "رَائِحَةٌ", "هُنَيْهَةٌ", "مَزِيدٌ", "بَالُوعَةٌ", "قَطُّ", "أَلْيَنُ", "أَطْيَبُ",
+    ],
+    newAdjectives: ["كَرِيهٌ", "غَافِلٌ", "لَيِّنٌ", "طَيِّبٌ"],
+    verbs: [
+      { root: "ظنن", lemma: "ظَنَّ", gloss: "think", cls: "doubled" },
+      { root: "جرر", lemma: "جَرَّ", gloss: "pull", cls: "doubled" },
+      { root: "مرر", lemma: "مَرَّ", gloss: "pass", cls: "doubled" },
+      { root: "عدد", lemma: "عَدَّ", gloss: "count", cls: "doubled" },
+      { root: "سبب", lemma: "سَبَّ", gloss: "insult", cls: "doubled" },
+      { root: "ردد", lemma: "رَدَّ", gloss: "return", cls: "doubled" },
+      { root: "صبب", lemma: "صَبَّ", gloss: "pour", cls: "doubled" },
+      { root: "شمم", lemma: "شَمَّ", gloss: "smell", cls: "doubled" },
+      { root: "مسس", lemma: "مَسَّ", gloss: "touch", cls: "doubled" },
+      sound("دفع", "دَفَعَ", "push"),
+      sound("مرض", "مَرِضَ", "be ill"),
+      sound("حزن", "حَزِنَ", "be sad"),
+    ],
+    newGrammar: [
+      "A doubled verb (ظنّ، مرّ، عدّ، ردّ) joins its two identical letters before a vowel: ظنَّ، يظنُّ، ظنّوا — and separates them before a consonant ending: ظننتُ، ظننّا، ظننّ، يظننّ",
+      "In the jussive both forms are possible: لم يعُدّ / لم يعدُدْ; the command: عُدَّ / اعْدُدْ؛ رُدَّ، شُمَّ، جُرَّ",
+      "قطّ (never, about the past) and أبداً (never, about the future): ما فعلتُ هذا قطّ، لن أفعله أبداً",
+      "More than: أطيب (from طيّب)، ألين (from ليّن)",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 30,
+    title: "Two people and two things with verbs: you two, they two",
+    newVocab: [
+      "أَنْتُمَا", "مَعْهَدٌ", "خُطُوطٌ", "جَوِّيَّةٌ", "الْمُرَاقِبُ", "اِنْتِهَاءٌ", "شَبَهٌ", "فَتَيَانِ", "تَوْأَمَانِ", "الْمُقَرَّرَةُ",
+    ],
+    verbSlots: slots(
+      "past:3md", "past:3fd", "past:2d", "pres:3md", "pres:3fd", "pres:2d", "subj:3md", "subj:3fd", "subj:2d", "juss:3md", "juss:3fd", "juss:2d", "imp:2d"
+    ),
+    newAffixes: { objects: ["كما", "هما"] },
+    newGrammar: [
+      "The dual in the past: they two (m.) ذهبا، they two (f.) ذهبتا، you two ذهبتما — الطالبان ذهبا، الطالبتان ذهبتا",
+      "The dual in the present: يذهبان، تذهبان (they two f. / you two)؛ after لن / لم / أن the ن is lost: لن يذهبا، لم يذهبا، أريد أن تذهبا",
+      "The command to two: اذهبا، اكتبا، اجلسا",
+      "The dual pronouns: أنتما (you two), هما (they two); possessives ـكما، ـهما: أسماؤكما، بينكما؛ object ـكما ـهما: رأيتُهما",
+    ],
+  },
+  {
+    book: 2,
+    lessonNo: 31,
+    title: "The describing word follows its noun in four ways",
+    newVocab: [
+      "الْمُعْجَمُ", "الْوَسِيطُ", "الْجُزْءُ", "أَجْزَاءُ", "الْمُقَرَّرَةُ", "يَابَانِيٌّ", "بَاكِسْتَانِيٌّ", "أَخِيرَتَيْنِ",
+    ],
+    verbs: [{ root: "دلل", lemma: "دَلَّ", gloss: "guide", cls: "doubled" }],
+    newGrammar: [
+      "A describing word (نعت) follows its noun and matches it in four things: its ending (هذا كتابٌ جديدٌ، قرأتُ كتاباً جديداً)، masculine or feminine (ابن كبير، بنت صغيرة)، one / two / many (مدرسان جيدان، زملاء مجتهدون)، definite or not (السيارة الجديدة غالية)",
+      "A nisba adjective: اليابانيّ، الباكستانيّ، المصريّ — محمد اليابانيّ",
+      "Asking for guidance: أريد أن تدلّني على معجم جيد (I want you to point me to a good dictionary)",
     ],
   },
 ];

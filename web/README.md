@@ -202,7 +202,7 @@ banner and visible `[PLACEHOLDERS]` (company, contact email, governing law, refu
 `src/content/` is the source of truth (`lessons.ts`, `scenarios.ts`, `genders.ts`, `placement.ts`); `db:seed` mirrors it into the
 `lessons`/`scenarios` tables so sessions can reference scenarios and content can be joined in analytics.
 
-The lesson tables follow **Madinah's own numbering**: Book 1 (all 23 lessons) in `src/content/book1.ts`, Book 2 (lessons 1-10 of 31 so far) in
+The lesson tables follow **Madinah's own numbering**: Book 1 (all 23 lessons) in `src/content/book1.ts`, Book 2 (all 31 lessons) in
 `src/content/book2.ts`. Each lesson has a book-local `lessonNo` and a global **position** (Book 1 = 1-23, Book 2 lesson n = 23 + n); everything
 cumulative — vocabulary, grammar, verbs, genders, a learner's level, placement — is keyed by position, so nothing written against Book 1 moved. They record which words and
 structures each lesson introduces — word lists and short grammar notes in our own words, never the book's sentences or exercises
@@ -226,7 +226,7 @@ defective, doubled; Form I or IV) and `lib/verbs.ts` generates every conjugation
 the imperatives of أكل / أخذ) carry explicit `overrides`. The generator produces normalized (undiacritized) forms, which is what the checker
 compares; `npm run check:verbs` tests every class against full written-out paradigms.
 
-**Left out on purpose:** the Qur'an, surah names and verses that Book 2 quotes in lessons 5, 6 and 9 (the buddy never refers to scripture).
+**Left out on purpose:** the Qur'an, surah names, verses and hadith that Book 2 quotes throughout (lessons 5, 6, 9, 14, 17, 18, 19, 21, 28, 29 and others), and verbs that only appear in religious contexts (حجّ، تلا، هدى، عبد). The buddy never refers to scripture.
 
 To add a lesson: extend `book1.ts` / `book2.ts` (and `genders.ts`), add scenarios (`openingLine` must stay inside the lesson's vocabulary) and a
 placement item, run `npm run audio:openers`, `npm run db:seed`, then `check:lessons`, `check:content`, `check:placement`.
@@ -254,18 +254,20 @@ It is a deliberately small experiment, not a finished feature: it exists to find
 
 ## Known limitations
 
-- **Content is Book 1 (23 lessons) and Book 2 lessons 1-10 (of 31)** (the spec's target learner is Book 2-3). Authoring Book 2 lessons 11-31 and Book 3
-  is the highest-value next step; the verb engine and multi-book structure are in place for it. Duals (Book 2 lesson 30) will need the generator's
-  dual forms checked and the irregular verbs' overrides extended.
-- **The vocab checker is a heuristic.** Verb forms are matched after dropping tashkeel (ذَهَبَتْ also admits ذَهَبْتُ / ذَهَبْتَ), and the
-  yes/no أَ is stripped from any word (أَحْمَرُ passes from lesson 16 as أ + حُمُر). Treat flagged and unflagged replies as signals, not proof.
+- **Content is Books 1 and 2 (54 lessons)** (the spec's target learner is Book 2-3, so Book 3 and the further books are the next content step).
+  The verb engine and multi-book structure are in place; Book 3 adds mainly new patterns (the derived verb forms II-X, the passive, and so on),
+  which `lib/verbs.ts` does not generate yet (it covers Form I, IV and VIII for the regular classes).
+- **The vocabulary checker is a heuristic.** Without diacritics some forms collide (اجلس "sit!" / أجلس "I sit"; نمت "I slept" / "we did not die"),
+  verb forms of different persons can share a spelling, and the yes/no أ is stripped from any word. Treat flagged and unflagged replies as signals,
+  not proof. On ordinary learner input about 2% of buddy turns still contain an out-of-lesson word after the guard; on deliberately tempting input
+  (English requests, future tense) about 25%.
 - **Scripture is never generated**: the prompt forbids it and `lib/scripture.ts` strips any sentence that frames or points at the Qur'an or hadith.
   Everyday expressions the course teaches (السلام عليكم, بسم الله, الحمد لله) are allowed as greetings. Real scripture, if ever added, must be
   retrieval-only from a verified corpus.
 - **Neon Auth is beta** and its self-deletion path is unverified (see *Your data*). The Stripe webhook needs a public URL outside local testing.
 - **OpenAI limits**: the key reaches only `gpt-4o-mini`, `gpt-4o-mini-transcribe` and `gpt-4o-mini-tts`, with a 200,000 tokens/minute cap.
   Each turn is 1-3 model calls; raise the limit before real traffic.
-- **Placement** is translation-prompt based, order-insensitive and covers lessons 1-23 with one or two items per lesson (a strong learner answers ~25 questions); a spoken free-conversation placement would need a model judge.
+- **Placement** is translation-prompt based, order-insensitive and covers lessons 1-54 with an item for most lessons (the test **skips ahead** while a learner keeps passing, so a perfect score is about 15 questions, not 56, and a miss starts them one past the highest lesson they passed); a spoken free-conversation placement would need a model judge.
 
 - **Recasts are only guaranteed for demonstrative–noun gender** (the commonest beginner error), which the app checks
   itself: 30/30 deliberate errors were recast and 0/20 correct sentences were wrongly flagged against the live model.

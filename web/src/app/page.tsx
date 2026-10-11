@@ -24,7 +24,7 @@ const coverage = books.map((b) => `Book ${b.book} (${b.count} lesson${b.count ==
 
 const FAQ = [
   { q: "Who is it for?", a: "Learners following the Madinah books on their own who can read and follow along but freeze when they have to speak — and have nobody to practise with." },
-  { q: "Which lessons does it cover?", a: `Madinah ${coverage} today: all of Book 1, and Book 2 as it is added lesson by lesson. Book 3 is next. The placement test tells you where you fit, and says so honestly if you're ahead of what's available.` },
+  { q: "Which lessons does it cover?", a: `Madinah ${coverage} today: the whole of Books 1 and 2. Book 3 is next. The placement test tells you where you fit, and says so honestly if you're ahead of what's available.` },
   { q: "Does it teach Qur'an?", a: "No. It practises everyday Fus'ha conversation within your lesson. The buddy never quotes the Qur'an or hadith and doesn't give religious rulings." },
   { q: "Is my voice recorded?", a: "Not by us. Your audio is turned into text for the conversation and we keep only that text. See the privacy page for who processes it." },
   { q: "Can the buddy be wrong?", a: "Yes — it's an AI. It's a practice partner, not a certified teacher, so trust your books and teachers first. If something looks off, that's worth noting rather than memorising." },
@@ -96,7 +96,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <section aria-labelledby="coverage" className="py-8">
           <h2 id="coverage" className="mb-3 text-2xl font-semibold tracking-tight">What&apos;s here today</h2>
           <p className="rounded-xl bg-accent-soft px-4 py-3 text-accent">
-            <span className="font-medium">Madinah {coverage}.</span> Book 1 is complete; Book 2 is being added lesson by lesson, and Book 3 is next. If you&apos;re
+            <span className="font-medium">Madinah {coverage}.</span> Books 1 and 2 are complete; Book 3 is next. If you&apos;re
             further along, the placement test will say so — and you&apos;re welcome to try it free first.
           </p>
         </section>
