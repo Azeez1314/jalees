@@ -23,14 +23,14 @@ const manifestPath = join(audioDir, "manifest.json");
 const audioManifest: Record<string, string> = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : {};
 
 for (const s of scenarios) {
-  if (!lessons.some((l) => l.lessonNo === s.lessonNo)) {
-    console.error(`✗ ${s.id}: no lesson ${s.lessonNo}`);
+  if (!lessons.some((l) => l.position === s.position)) {
+    console.error(`✗ ${s.id}: no lesson at position ${s.position}`);
     failures++;
     continue;
   }
-  const violations = checkVocab(s.openingLine, cumulativeVocab(s.lessonNo));
+  const violations = checkVocab(s.openingLine, cumulativeVocab(s.position));
   if (violations.length) {
-    console.error(`✗ ${s.id} (lesson ${s.lessonNo}): ${violations.map((v) => v.token).join(", ")}`);
+    console.error(`✗ ${s.id} (position ${s.position}): ${violations.map((v) => v.token).join(", ")}`);
     failures++;
     continue;
   }

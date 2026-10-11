@@ -134,7 +134,7 @@ export function parseNarrative(raw: string, fallback: Narrative, allowedArabic: 
   };
 }
 
-const SYSTEM = `You write the end-of-session recap for a beginner learning Arabic (Madinah Book 1) with a conversation buddy. You are given the scenario, the transcript (Arabic) and a short list of the correction types that came up. Reply with ONE JSON object and nothing else:
+const SYSTEM = `You write the end-of-session recap for a learner of Arabic following the Madinah books with a conversation buddy. You are given the scenario, the transcript (Arabic) and a short list of the correction types that came up. Reply with ONE JSON object and nothing else:
 {
   "summary": "<=60 words: what they practised and how it went>",
   "went_well": "<=25 words: one specific thing visible in the transcript, or an empty string if nothing stands out>",
@@ -175,7 +175,7 @@ export async function generateNarrative(input: {
         },
       ],
     });
-    const allowed = quotableArabic(input.scenario.lessonNo, input.transcript.map((t) => t.text));
+    const allowed = quotableArabic(input.scenario.position, input.transcript.map((t) => t.text));
     return parseNarrative(res.choices[0].message.content ?? "", fallback, allowed);
   } catch (err) {
     console.warn("recap narrative failed; using fallback", err);

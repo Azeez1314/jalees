@@ -1,4 +1,5 @@
-import { scenarios, type Scenario } from "@/content/scenarios";
+import { positionOf } from "@/content/lessons";
+import { scenarios, type Scenario, type ScenarioSeed } from "@/content/scenarios";
 
 /**
  * PROTOTYPE — the speaking track, for learners who understand Arabic (they have finished Madinah Books 1-3 or equivalent)
@@ -11,7 +12,7 @@ import { scenarios, type Scenario } from "@/content/scenarios";
  * `lessonNo` is 23 only so that code written for the ladder (recap, placement) has a number to work with; it is not used to
  * constrain the buddy.
  */
-export const speakingScenarios: Scenario[] = [
+const seeds: ScenarioSeed[] = [
   {
     id: "sp-about-me",
     track: "speaking",
@@ -59,6 +60,9 @@ export const speakingScenarios: Scenario[] = [
     targetStructures: ["polite requests", "days and times", "reasons"],
   },
 ];
+
+/** `lessonNo` 23 is only a placeholder position for code written for the ladder (recap, placement); it does not constrain the buddy. */
+export const speakingScenarios: Scenario[] = seeds.map((s) => ({ ...s, position: positionOf(s.book ?? 1, s.lessonNo) }));
 
 const allScenarios: Scenario[] = [...scenarios, ...speakingScenarios];
 

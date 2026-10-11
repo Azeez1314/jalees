@@ -40,6 +40,7 @@ restates mistakes correctly ("recast"), and shows replies fully diacritized with
 | `npm run metrics` | The spec's launch metrics (activation, engagement, D7/D30, trial→paid, cost per learner-day), aggregates only |
 | `npm run check:speaking` | Offline checks for the speaking-track prototype (content, prompt, correction sanity) |
 | `npm run report:speaking` | Prototype evaluation from stored sessions: words per turn, fixes vs upgrades, stretch words |
+| `npm run check:verbs` | Paradigm tests for the verb generator (every class, tense and person) |
 | `npm run check:lessons` | Offline checks on the lesson tables: verb/affix/feminine gating, gender tables, the prompt follows the lesson |
 | `npm run check:content` | Fails if any scenario opener uses vocab above its lesson (run after editing content) |
 | `npm run check:recast` | Unit checks for the generic recast safety validator (no network) |
@@ -201,7 +202,9 @@ banner and visible `[PLACEHOLDERS]` (company, contact email, governing law, refu
 `src/content/` is the source of truth (`lessons.ts`, `scenarios.ts`, `genders.ts`, `placement.ts`); `db:seed` mirrors it into the
 `lessons`/`scenarios` tables so sessions can reference scenarios and content can be joined in analytics.
 
-The lesson tables follow **Madinah Book 1's own numbering** (all 23 lessons authored). They record which words and
+The lesson tables follow **Madinah's own numbering**: Book 1 (all 23 lessons) in `src/content/book1.ts`, Book 2 (lessons 1-10 of 31 so far) in
+`src/content/book2.ts`. Each lesson has a book-local `lessonNo` and a global **position** (Book 1 = 1-23, Book 2 lesson n = 23 + n); everything
+cumulative — vocabulary, grammar, verbs, genders, a learner's level, placement — is keyed by position, so nothing written against Book 1 moved. They record which words and
 structures each lesson introduces — word lists and short grammar notes in our own words, never the book's sentences or exercises
 (product spec: align to lesson numbers only). Words the book shows only in drills or appendices count as not taught yet.
 Things the book does that shape the buddy:
@@ -217,7 +220,15 @@ Things the book does that shape the buddy:
 - non-human plurals count as feminine singular for هذه / تلك from lesson 16 (so `هذا كتب` is recast to `هذه كتب`), and numbers 3-10 come
   in both forms (with ـة for masculine nouns in 19, without for feminine nouns in 20).
 
-To add a lesson: extend `lessons.ts` (and `genders.ts`), add scenarios (`openingLine` must stay inside the lesson's vocabulary) and a
+**Verbs.** Book 1 hand-lists exact forms (`newVerbs`). From Book 2 on verbs are stored as **root + class** (`verbs`: sound, assimilated, hollow,
+defective, doubled; Form I or IV) and `lib/verbs.ts` generates every conjugation; a lesson unlocks **slots** (`verbSlots`: tense × person, e.g.
+`past:3ms`, `pres:*`) for all verbs known so far, and object pronouns on verbs unlock separately (`newAffixes.objects`). Irregular verbs (جاء، رأى،
+the imperatives of أكل / أخذ) carry explicit `overrides`. The generator produces normalized (undiacritized) forms, which is what the checker
+compares; `npm run check:verbs` tests every class against full written-out paradigms.
+
+**Left out on purpose:** the Qur'an, surah names and verses that Book 2 quotes in lessons 5, 6 and 9 (the buddy never refers to scripture).
+
+To add a lesson: extend `book1.ts` / `book2.ts` (and `genders.ts`), add scenarios (`openingLine` must stay inside the lesson's vocabulary) and a
 placement item, run `npm run audio:openers`, `npm run db:seed`, then `check:lessons`, `check:content`, `check:placement`.
 
 `../phase0-eval` is the frozen Phase 0 prototype (its own tokenizer and prompts); only its `lessons.ts` data is kept in step.
@@ -243,8 +254,9 @@ It is a deliberately small experiment, not a finished feature: it exists to find
 
 ## Known limitations
 
-- **Content is Book 1 (all 23 lessons) only** (the spec's target learner is Book 2-3). This is the biggest gap between the product and its pitch;
-  authoring Books 2-3 (vocab, grammar, genders, scenarios, placement items) is the highest-value next step.
+- **Content is Book 1 (23 lessons) and Book 2 lessons 1-10 (of 31)** (the spec's target learner is Book 2-3). Authoring Book 2 lessons 11-31 and Book 3
+  is the highest-value next step; the verb engine and multi-book structure are in place for it. Duals (Book 2 lesson 30) will need the generator's
+  dual forms checked and the irregular verbs' overrides extended.
 - **The vocab checker is a heuristic.** Verb forms are matched after dropping tashkeel (ذَهَبَتْ also admits ذَهَبْتُ / ذَهَبْتَ), and the
   yes/no أَ is stripped from any word (أَحْمَرُ passes from lesson 16 as أ + حُمُر). Treat flagged and unflagged replies as signals, not proof.
 - **Scripture is never generated**: the prompt forbids it and `lib/scripture.ts` strips any sentence that frames or points at the Qur'an or hadith.

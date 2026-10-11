@@ -19,7 +19,7 @@ const check = (ok: boolean, label: string, detail = "") => {
 const ids = placementItems.map((i) => i.id);
 check(new Set(ids).size === ids.length, "item ids are unique");
 check(placementItems.every((i, n) => n === 0 || i.lessonNo >= placementItems[n - 1].lessonNo), "items escalate: lessons never go down");
-check(lessons.every((l) => placementItems.some((i) => i.lessonNo === l.lessonNo)), "every lesson with content has at least one placement item");
+check(lessons.every((l) => placementItems.some((i) => i.lessonNo === l.position)), "every lesson with content has at least one placement item");
 check(placementItems.every((i) => !/[؀-ۿ]/.test(i.prompt)), "prompts are English (no Arabic to copy)");
 for (const item of placementItems) {
   const leaks = checkVocab(item.example, cumulativeVocab(item.lessonNo));
@@ -70,7 +70,7 @@ check(all.lesson === top && all.beyondContent, `passes everything → lesson ${t
 // extends automatically: if the content grew a lesson with no placement items yet, a perfect score starts there, not 'beyond'.
 const grown = placeLearner(placementItems.map(pass), placementItems, top + 1);
 check(grown.lesson === top + 1 && !grown.beyondContent, `if content has a lesson ${top + 1}, a perfect score starts there (not 'beyond content')`, JSON.stringify(grown));
-check(top === 23, "content covers all 23 lessons of Book 1");
+check(top === lessons.length && lessons.filter((l) => l.book === 1).length === 23, "content positions run through every authored lesson (Book 1 complete)");
 
 async function db() {
   if (!process.env.DATABASE_URL) {

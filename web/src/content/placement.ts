@@ -68,4 +68,15 @@ export const placementItems: PlacementItem[] = [
   { id: "p22a", lessonNo: 22, prompt: "I have a red pen.", slots: [["عندي", "لي"], ["قلم"], ["أحمر"]], example: "عِنْدِي قَلَمٌ أَحْمَرُ", wrong: ["عندي قلم أزرق", "عندي أحمر", "قلم أحمر"] },
   // Lesson 23 — names, places
   { id: "p23a", lessonNo: 23, prompt: "Ahmad went to Makkah.", slots: [["ذهب"], ["أحمد"], ["إلى"], ["مكة"]], example: "ذَهَبَ أَحْمَدُ إِلَى مَكَّةَ", wrong: ["أحمد في مكة", "ذهب أحمد", "ذهب إلى مكة"] },
+  // ---- Book 2 (lessonNo here is the global position: Book 2 lesson n = 23 + n) -------------------------------------------------
+  { id: "p24a", lessonNo: 24, prompt: "Indeed, he is a merchant.", slots: [["إنه"], ["تاجر"]], example: "إِنَّهُ تَاجِرٌ", wrong: ["هو تاجر", "إنه", "تاجر"] },
+  { id: "p25a", lessonNo: 25, prompt: "I am not a teacher.", slots: [["لست"], ["مدرس", "مدرسا", "بمدرس"]], example: "لَسْتُ بِمُدَرِّسٍ", wrong: ["أنا مدرس", "ليس بمدرس", "لست"] },
+  { id: "p26a", lessonNo: 26, prompt: "He is taller than me.", slots: [["أطول"], ["مني"]], example: "هُوَ أَطْوَلُ مِنِّي", wrong: ["هو طويل مني", "هو أطول", "هو أطول منك"] },
+  { id: "p27a", lessonNo: 27, prompt: "I went to the market.", slots: [["ذهبت"], ["إلى"], ["سوق"]], example: "ذَهَبْتُ إِلَى السُّوقِ", wrong: ["ذهب إلى السوق", "أنا في السوق", "ذهبت"] },
+  { id: "p28a", lessonNo: 28, prompt: "Hamid opened the door.", slots: [["فتح"], ["حامد"], ["باب"]], example: "فَتَحَ حَامِدٌ الْبَابَ", wrong: ["حامد الباب", "فتح الباب", "حامد فتح"] },
+  { id: "p29a", lessonNo: 29, prompt: "I saw her.", slots: [["رأيتها"]], example: "رَأَيْتُهَا", wrong: ["رأيته", "رأيتك", "رأيت"] },
+  { id: "p30a", lessonNo: 30, prompt: "We played football.", slots: [["لعبنا"], ["كرة"], ["قدم"]], example: "لَعِبْنَا كُرَةَ الْقَدَمِ", wrong: ["لعبت كرة القدم", "كرة القدم", "لعبنا"] },
+  { id: "p31a", lessonNo: 31, prompt: "The girls went to the library.", slots: [["ذهبن"], ["طالبات", "بنات"], ["مكتبة"]], example: "الْبَنَاتُ ذَهَبْنَ إِلَى الْمَكْتَبَةِ", wrong: ["البنات ذهبوا إلى المكتبة", "البنات ذهبت إلى المكتبة", "ذهبن إلى المكتبة"] },
+  { id: "p32a", lessonNo: 32, prompt: "How beautiful this car is!", slots: [["ما"], ["أجمل"], ["سيارة"]], example: "مَا أَجْمَلَ هَذِهِ السَّيَّارَةَ", wrong: ["ما جميلة هذه السيارة", "هذه السيارة جميلة", "ما أجمل"] },
+  { id: "p33a", lessonNo: 33, prompt: "My father goes to the market every day.", slots: [["يذهب"], ["أبي"], ["سوق"], ["كل"], ["يوم"]], example: "يَذْهَبُ أَبِي إِلَى السُّوقِ كُلَّ يَوْمٍ", wrong: ["ذهب أبي إلى السوق كل يوم", "يذهب أبي إلى السوق", "أبي في السوق كل يوم"] },
 ];

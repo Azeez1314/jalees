@@ -96,14 +96,14 @@ export async function generateBuddyTurn(input: {
   memoryFacts?: string[];
 }): Promise<BuddyTurnResult> {
   const { scenario, history, learnerText, recentMistakes, memoryFacts = [] } = input;
-  const allowed = cumulativeVocab(scenario.lessonNo);
+  const allowed = cumulativeVocab(scenario.position);
 
   // The commonest beginner error (demonstrative–noun gender) is decided by the app from the gender table, not by the
   // model: when it fires, the model is told the exact fix and then verified (see agreement.ts).
-  const detected = detectAgreementError(learnerText, scenario.lessonNo);
+  const detected = detectAgreementError(learnerText, scenario.position);
 
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-    { role: "system", content: buildBuddySystemPrompt(scenario.lessonNo, scenario.goal, recentMistakes, memoryFacts) },
+    { role: "system", content: buildBuddySystemPrompt(scenario.position, scenario.goal, recentMistakes, memoryFacts) },
     ...history.map(
       (t): OpenAI.Chat.ChatCompletionMessageParam => ({
         role: t.role === "buddy" ? "assistant" : "user",
@@ -131,11 +131,11 @@ export async function generateBuddyTurn(input: {
     }
     if (!r) return null;
     // The model claims a demonstrative is wrong although it agrees with a noun we know — a false alarm.
-    if (changesDemonstrative(r.original, r.corrected) && hasJudgeablePair(learnerText, scenario.lessonNo)) {
+    if (changesDemonstrative(r.original, r.corrected) && hasJudgeablePair(learnerText, scenario.position)) {
       return "the learner's demonstrative already agrees with its noun, so there is no error to correct. Set recast to null";
     }
     const quotesLearner = normalizeArabic(learnerText).includes(normalizeArabic(r.original));
-    if (quotesLearner && isSafeRecast(r.original, r.corrected, scenario.lessonNo)) return null;
+    if (quotesLearner && isSafeRecast(r.original, r.corrected, scenario.position)) return null;
     return "your correction was rejected — it must quote the learner's words exactly and fix only the agreement or a particle (e.g. swap هذه/هذا). Never change the learner's noun to a different word, and never delete words (using vocabulary beyond the lesson is not an error). If you are not certain there is an error, set recast to null";
   };
 
@@ -149,7 +149,7 @@ export async function generateBuddyTurn(input: {
     // When we know the fix, the reply must actually model it (the observed failure: swapping the noun for كتابة).
     const missesFix = detected !== null && !replyModelsFix(d.reply, detected);
     // The buddy must never itself pair a demonstrative with a noun of the wrong gender.
-    const badReply = detectAgreementError(d.reply, scenario.lessonNo);
+    const badReply = detectAgreementError(d.reply, scenario.position);
     // Non-negotiable: no scripture, ever (see lib/scripture.ts).
     const scripture = containsScripture(d.reply);
     return {
@@ -225,8 +225,8 @@ export async function generateBuddyTurn(input: {
 
   // Last line of defence: never show a reply that itself mismatches a demonstrative and noun. Drop the bad sentence(s);
   // if nothing is left, fall back to the scenario's own (verified) opening line.
-  if (detectAgreementError(reply, scenario.lessonNo)) {
-    reply = removeAgreementErrors(reply, scenario.lessonNo) || scenario.openingLine;
+  if (detectAgreementError(reply, scenario.position)) {
+    reply = removeAgreementErrors(reply, scenario.position) || scenario.openingLine;
   }
 
   // Last line of defence for the non-negotiable rule: if scripture survived the rewrite, remove those sentences (or fall back

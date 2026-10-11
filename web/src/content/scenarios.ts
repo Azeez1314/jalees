@@ -1,6 +1,10 @@
-export interface Scenario {
+import { positionOf } from "@/content/lessons";
+
+export interface ScenarioSeed {
   /** Stable slug — used as the primary key in the scenarios table. */
   id: string;
+  /** The Madinah book (default 1). `lessonNo` is that book's own lesson number; `position` (below) is global. */
+  book?: number;
   /** "speaking" = the prototype speaking track (content/speaking.ts), which is not constrained by a lesson whitelist. Default: the lesson ladder. */
   track?: "ladder" | "speaking";
   lessonNo: number;
@@ -12,12 +16,17 @@ export interface Scenario {
   targetStructures: string[];
 }
 
+/** A scenario with its global lesson position resolved (see content/lessons.ts). Everything cumulative is keyed by `position`. */
+export interface Scenario extends ScenarioSeed {
+  position: number;
+}
+
 /**
  * Book 1 situational dialogues, two or three per lesson. Hand-authored: each opener is
  * validated against the lesson's whitelist so the first thing a learner hears
  * can never be above their level.
  */
-export const scenarios: Scenario[] = [
+const seeds: ScenarioSeed[] = [
   // Lesson 1 — هذا, ما هذا؟, من هذا؟, أ-questions
   {
     id: "b1l1-what-is-this",
@@ -425,4 +434,198 @@ export const scenarios: Scenario[] = [
     openingLine: "هَذَا الْكِتَابُ لِحَمْزَةَ وَذَلِكَ الْقَلَمُ لِعُثْمَانَ. وَلِمَنْ هَذَا الدَّفْتَرُ؟",
     targetStructures: ["ل + name", "هذا / ذلك"],
   },
+
+  // ---- Book 2 ----------------------------------------------------------------------------------------------------------
+  // Lesson 1 — إنّ, لعلّ, ذو, أم, مائة / ألف
+  {
+    id: "b2l1-getting-to-know",
+    book: 2,
+    lessonNo: 1,
+    title: "Getting to know a classmate",
+    goal: "The learner asks and answers questions about a new classmate (where from, married, brothers, sisters) using إنّ + pronoun, لعلّ and أ … أم …",
+    openingLine: "السَّلَامُ عَلَيْكُمْ. لَعَلَّكَ بِخَيْرٍ. أَمِنَ الْهِنْدِ أَنْتَ أَمْ مِنْ بَاكِسْتَانَ؟",
+    targetStructures: ["أ … أم …", "لعلّ", "إنّ + pronoun"],
+  },
+  {
+    id: "b2l1-how-much",
+    book: 2,
+    lessonNo: 1,
+    title: "How much is it?",
+    goal: "The learner asks the price of things (a watch, a book, a dictionary) and says if it is expensive or cheap, using بكم and numbers like مائة and ألف.",
+    openingLine: "إِنَّ هَذِهِ السَّاعَةَ جَمِيلَةٌ. أَغَالِيَةٌ هِيَ أَمْ رَخِيصَةٌ؟",
+    targetStructures: ["إنّ", "بكم", "مائة / ألف"],
+  },
+  // Lesson 2 — ليس
+  {
+    id: "b2l2-nice-to-meet-you",
+    book: 2,
+    lessonNo: 2,
+    title: "Nice to meet you",
+    goal: "The learner introduces themselves to a newcomer and answers yes/no questions with نعم or with ليس / لست (I am not a student, I am not married).",
+    openingLine: "السَّلَامُ عَلَيْكُمْ. أَنَا مَسْرُورٌ بِلِقَائِكَ. أَمُتَزَوِّجٌ أَنْتَ؟",
+    targetStructures: ["ليس / لست + بـ", "أ-questions"],
+  },
+  {
+    id: "b2l2-are-you-not",
+    book: 2,
+    lessonNo: 2,
+    title: "Aren't you …?",
+    goal: "The learner denies things about themselves and their family with لست / ليس / ليست (not a teacher, not rich, not from there).",
+    openingLine: "أَنْتَ طَالِبٌ جَدِيدٌ. أَلَسْتَ مِنَ الْهِنْدِ؟",
+    targetStructures: ["أليس / ألست", "ليس + بـ"],
+  },
+  // Lesson 3 — comparatives, numbers 11-20, ordinals
+  {
+    id: "b2l3-who-is-taller",
+    book: 2,
+    lessonNo: 3,
+    title: "Who is taller?",
+    goal: "The learner compares people and things (taller, bigger, cheaper, nicer, more) with the أفعل form and من, and names the first, second and third.",
+    openingLine: "هَاشِمٌ طَوِيلٌ وَحَامِدٌ أَطْوَلُ مِنْهُ. مَنْ أَطْوَلُ طَالِبٍ فِي فَصْلِكَ؟",
+    targetStructures: ["أفعل + من", "superlative"],
+  },
+  {
+    id: "b2l3-which-is-better",
+    book: 2,
+    lessonNo: 3,
+    title: "Which is better?",
+    goal: "The learner chooses between two things (two hotels, two schools, two cars) and says which is nicer, bigger, cleaner or cheaper, and why.",
+    openingLine: "أَيُّهُمَا أَحْسَنُ: هَذَا الْفُنْدُقُ أَمْ ذَلِكَ؟",
+    targetStructures: ["أيّهما", "أفعل", "كأنّ / لكنّ"],
+  },
+  // Lesson 4 — the past tense
+  {
+    id: "b2l4-where-did-they-go",
+    book: 2,
+    lessonNo: 4,
+    title: "Where did they go?",
+    goal: "The learner says where family members went (father, mother, brothers, sisters) and when they came back, using ذهب / ذهبت / ذهبوا / ذهبن.",
+    openingLine: "أَيْنَ ذَهَبَ أَبُوكَ؟ وَأَيْنَ ذَهَبَتْ أُمُّكَ؟",
+    targetStructures: ["ذهب / ذهبت", "ذهبوا / ذهبن"],
+  },
+  {
+    id: "b2l4-why-did-you-return",
+    book: 2,
+    lessonNo: 4,
+    title: "Why did you come back?",
+    goal: "The learner explains why they went out or came back using لأنّ + pronoun (because I am ill, because the school is closed).",
+    openingLine: "لِمَاذَا رَجَعْتَ مِنَ الْمَدْرَسَةِ؟ أَرَجَعْتَ لِأَنَّكَ مَرِيضٌ؟",
+    targetStructures: ["لأنّ", "past tense", "أ-questions"],
+  },
+  // Lesson 5 — doer and thing done
+  {
+    id: "b2l5-who-opened",
+    book: 2,
+    lessonNo: 5,
+    title: "Who opened it?",
+    goal: "The learner says who did something to what (who opened the door, who broke the pen, who wrote it) with a verb, a doer and a thing done to.",
+    openingLine: "مَنْ فَتَحَ بَابَ الْفَصْلِ؟ وَمَنْ فَتَحَ النَّوَافِذَ؟",
+    targetStructures: ["verb + doer + object", "object pronoun"],
+  },
+  {
+    id: "b2l5-did-you-understand",
+    book: 2,
+    lessonNo: 5,
+    title: "Did you understand?",
+    goal: "The learner answers questions about schoolwork (did you understand the lesson, did you write the answers) with نعم / لا and ما + past.",
+    openingLine: "أَفَهِمْتَ الدَّرْسَ؟ أَكَتَبْتَ الْأَجْوِبَةَ؟",
+    targetStructures: ["أ + past", "ما + past", "object pronoun"],
+  },
+  // Lesson 6 — you (f.), رأى, numbers 11-20 feminine
+  {
+    id: "b2l6-did-you-see",
+    book: 2,
+    lessonNo: 6,
+    title: "Did you see her?",
+    goal: "The learner says who they saw and where, using رأيتُه / رأيتُها / رأيتُهم, and answers with نعم or ما رأيتُ.",
+    openingLine: "أَرَأَيْتَ أُخْتِي الْيَوْمَ؟ أَيْنَ رَأَيْتَهَا؟",
+    targetStructures: ["رأيتُ + object pronoun", "أين"],
+  },
+  {
+    id: "b2l6-take-this",
+    book: 2,
+    lessonNo: 6,
+    title: "Take this one",
+    goal: "The learner follows and gives short commands (take this, give me that) and describes things with colours and numbers 11-20.",
+    openingLine: "خُذْ هَذَا الْقَمِيصَ. أَرَأَيْتَ ذَلِكَ الْقَمِيصَ الْأَحْمَرَ؟",
+    targetStructures: ["خذ / هات", "رأيت"],
+  },
+  // Lesson 7 — you (pl.), we, كان
+  {
+    id: "b2l7-after-school",
+    book: 2,
+    lessonNo: 7,
+    title: "After school",
+    goal: "The learner says what 'we' did after school (played football, read the papers, heard the news) using ـنا, and answers questions to a group.",
+    openingLine: "أَيْنَ ذَهَبْتُمْ بَعْدَ الدَّرْسِ؟ أَلَعِبْتُمْ كُرَةَ الْقَدَمِ؟",
+    targetStructures: ["ذهبتم / ذهبنا", "لعبتم"],
+  },
+  {
+    id: "b2l7-the-lost-book",
+    book: 2,
+    lessonNo: 7,
+    title: "Where is the book?",
+    goal: "The learner talks about where a book or a magazine was (under the other book, in the room), using كان + place and ذو + a description.",
+    openingLine: "أَيْنَ الْكِتَابُ ذُو الْغِلَافِ الْأَحْمَرِ الَّذِي كَانَ فِي غُرْفَتِي؟",
+    targetStructures: ["كان + place", "ذو", "الذي"],
+  },
+  // Lesson 8 — the full past table
+  {
+    id: "b2l8-who-did-what",
+    book: 2,
+    lessonNo: 8,
+    title: "Who did what?",
+    goal: "The learner uses the past with different subjects (I, you, he, she, we, they) to say where each person went or what they did.",
+    openingLine: "أَنَا ذَهَبْتُ إِلَى الْمَدْرَسَةِ. وَأَنْتَ؟ أَذَهَبْتَ؟",
+    targetStructures: ["full past table", "أ + past"],
+  },
+  {
+    id: "b2l8-the-girls",
+    book: 2,
+    lessonNo: 8,
+    title: "The girls and the boys",
+    goal: "The learner contrasts what the girls did with what the boys did, using ذهبن / خرجن and ذهبوا / خرجوا.",
+    openingLine: "الْبَنَاتُ ذَهَبْنَ إِلَى الْمَكْتَبَةِ. وَالْأَوْلَادُ؟ أَذَهَبُوا؟",
+    targetStructures: ["ذهبن vs ذهبوا", "أ + past"],
+  },
+  // Lesson 9 — object pronouns, wonder, relatives
+  {
+    id: "b2l9-how-wonderful",
+    book: 2,
+    lessonNo: 9,
+    title: "How nice!",
+    goal: "The learner exclaims about things with ما أفعله! (how big, how beautiful, how easy) and says which is the nicer.",
+    openingLine: "مَا أَجْمَلَ هَذِهِ السَّيَّارَةَ! وَمَا أَكْبَرَ ذَلِكَ الْبَيْتَ!",
+    targetStructures: ["ما أفعله!", "هذه / ذلك"],
+  },
+  {
+    id: "b2l9-the-new-students",
+    book: 2,
+    lessonNo: 9,
+    title: "The new students",
+    goal: "The learner tells what the new students did (came, went to the director, came back) and why, using the past and لِمَ.",
+    openingLine: "رَجَعَ الطُّلَّابُ الْجُدُدُ بَعْدَ لَحْظَةٍ. أَيْنَ ذَهَبُوا؟ لِمَ رَجَعُوا؟",
+    targetStructures: ["past", "لِمَ", "ذهبوا"],
+  },
+  // Lesson 10 — the present tense
+  {
+    id: "b2l10-every-day",
+    book: 2,
+    lessonNo: 10,
+    title: "Every day",
+    goal: "The learner describes their routine in the present (where they go every day, when they come back, what they do) with يـ / تـ / أـ.",
+    openingLine: "أَيْنَ تَذْهَبُ كُلَّ يَوْمٍ؟ أَتَرْجِعُ مُتَأَخِّرًا؟",
+    targetStructures: ["present tense", "كل يوم", "دائما / أحيانا"],
+  },
+  {
+    id: "b2l10-at-the-factory",
+    book: 2,
+    lessonNo: 10,
+    title: "At the factory",
+    goal: "The learner asks and says what a relative does at work (when he goes, when he returns, how many workers) in the present.",
+    openingLine: "يَذْهَبُ أَبِي إِلَى الْمَصْنَعِ فِي الصَّبَاحِ. مَاذَا يَفْعَلُ أَبُوكَ؟",
+    targetStructures: ["present tense", "ماذا يفعل", "numbers 21-30"],
+  },
 ];
+
+export const scenarios: Scenario[] = seeds.map((s) => ({ ...s, position: positionOf(s.book ?? 1, s.lessonNo) }));

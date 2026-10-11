@@ -1,4 +1,4 @@
-import { normalizeArabic, prefixMarker, suffixMarker, verbMarker } from "@/content/lessons";
+import { generatedMarker, normalizeArabic, objectMarker, prefixMarker, suffixMarker, verbMarker } from "@/content/lessons";
 import type { VocabViolation } from "@/content/types";
 
 // Arabic letters + tatweel + tashkeel + superscript alef + Quranic annotation marks —
@@ -9,10 +9,11 @@ const ARABIC_WORD = /[ء-غـ-ٰٟۖ-ۭ]+/g;
 /**
  * Prefixes that attach to a word without changing lesson scope. Only "ال" (the) and "و" (and) are always on; the rest are
  * switched on by the lesson that teaches them (a "@p:…" marker in the allowed set, from `newAffixes` in lessons.ts):
- * "ا" is the yes/no question أَ (lesson 1), "ل" means 'for / belonging to' and "لل" is ل + ال (lesson 6).
+ * "ا" is the yes/no question أَ (lesson 1), "ل" means 'for / belonging to' and "لل" is ل + ال (lesson 6), "ب" means 'with / in / by'
+ * (Book 2 lesson 1: بكم، بمائة، ليس بطالب).
  */
 const ALWAYS_PREFIXES = ["ال", "و"];
-const OPTIONAL_PREFIXES: Record<string, string[]> = { ا: ["ا"], ل: ["لل", "ل"] };
+const OPTIONAL_PREFIXES: Record<string, string[]> = { ا: ["ا"], ل: ["لل", "ل"], ب: ["ب"] };
 
 /**
  * Attached-pronoun suffixes, each switched on by its "@s:…" marker (lesson 10 teaches ـي ـك ـه ـها). Without the marker a word
@@ -73,6 +74,44 @@ function verbMatches(norm: string, allowed: Set<string>): boolean {
   return false;
 }
 
+/** Object pronouns that may follow a generated verb form, longest first. Each is switched on by its "@o:" marker. */
+const OBJECT_SUFFIXES = ["كما", "هما", "كم", "كن", "هم", "هن", "ها", "ني", "نا", "ك", "ه"];
+const PAST_ENDING = /(?:ت|تم|تن|تما|نا|وا|ن)$/;
+
+/**
+ * A form generated from a taught verb (see lib/verbs.ts), allowing what Arabic lets you attach to a verb: a fused "و" (and),
+ * the future "س" (once taught), the yes/no أ, and an object pronoun (once taught). The أ is only peeled when what follows is
+ * unmistakably a verb — it starts with a present prefix (ي ت ن) or ends in a past ending — because a bare أذهب is "I go".
+ */
+function generatedVerbMatches(norm: string, allowed: Set<string>): boolean {
+  const generated = (w: string) => allowed.has(generatedMarker(w));
+  const withObjects = (w: string): boolean => {
+    if (generated(w)) return true;
+    for (const o of OBJECT_SUFFIXES) {
+      if (!allowed.has(objectMarker(o)) || !w.endsWith(o) || w.length <= o.length + 1) continue;
+      const base = w.slice(0, -o.length);
+      if (generated(base)) return true;
+      if (base.endsWith("و") && (generated(base + "ا") || generated(base.slice(0, -1)))) return true; // كتبوه ← كتبوا, فهمتموه ← فهمتم
+    }
+    return false;
+  };
+  const withPrefixes = (w: string, depth: number): boolean => {
+    if (withObjects(w)) return true;
+    if (depth >= 3 || w.length < 4) return false;
+    if (w.startsWith("و") && withPrefixes(w.slice(1), depth + 1)) return true;
+    if (w.startsWith("س") && allowed.has(prefixMarker("س")) && /^[يتنا]/.test(w.slice(1)) && withPrefixes(w.slice(1), depth + 1)) return true;
+    if (w.startsWith("ا") && allowed.has(prefixMarker("ا"))) {
+      const rest = w.slice(1);
+      const endsLikePast = (r: string) =>
+        PAST_ENDING.test(r) ||
+        OBJECT_SUFFIXES.some((o) => allowed.has(objectMarker(o)) && r.endsWith(o) && PAST_ENDING.test(r.slice(0, -o.length).replace(/و$/, "")));
+      if (rest.length > 3 && (/^[يتن]/.test(rest) || endsLikePast(rest)) && withPrefixes(rest, depth + 1)) return true;
+    }
+    return false;
+  };
+  return withPrefixes(norm, 0);
+}
+
 /**
  * Checks each Arabic word token in `text` against the cumulative allowed
  * vocab set. This is a heuristic whitelist match (normalize + strip the affixes
@@ -90,7 +129,7 @@ export function checkVocab(text: string, allowed: Set<string>): VocabViolation[]
     const norm = normalizeArabic(raw);
     if (norm.length <= 1) continue; // single-letter attached particles already normalized away elsewhere
     // Verbs match exactly (optionally with a fused "و"): their forms are listed one by one, never derived by stripping.
-    const isVerb = verbMatches(norm, allowed);
+    const isVerb = verbMatches(norm, allowed) || generatedVerbMatches(norm, allowed);
     const known = isVerb || candidateForms(norm, prefixes, suffixes).some((f) => allowed.has(f));
     if (!known) {
       violations.push({ token: raw, reason: "not in cumulative allowed vocab (after affix stripping)" });

@@ -46,8 +46,8 @@ export interface Placement {
   beyondContent: boolean;
 }
 
-/** Highest lesson that has content (scenarios and vocabulary tables); grows automatically as lessons are added. */
-export const maxContentLesson = () => Math.max(...lessons.map((l) => l.lessonNo));
+/** Highest lesson POSITION that has content (scenarios and vocabulary tables); grows automatically as lessons are added. */
+export const maxContentLesson = () => Math.max(...lessons.map((l) => l.position));
 
 /** Start lesson = the lesson of the first missed item; if nothing was missed, one past the last lesson tested (capped at the content). */
 export function placeLearner(results: ItemResult[], items: PlacementItem[] = placementItems, contentMax: number = maxContentLesson()): Placement {

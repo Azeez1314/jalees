@@ -1,3 +1,5 @@
+import { positionOf } from "@/content/lessons";
+
 /**
  * Grammatical gender of the nouns each lesson introduces. Injected into the prompt so the model judges agreement
  * (هذا/هذه, adjectives, pronouns) from facts instead of guessing — gpt-4o-mini gets this wrong otherwise.
@@ -87,3 +89,20 @@ export function cumulativeGenders(uptoLesson: number): { masculine: string[]; fe
   }
   return out;
 }
+
+/** Book 2 (keyed by global position, so authored here with positionOf). Same conventions as above. */
+const book2: Record<number, { masculine: string[]; feminine: string[] }> = {
+  1: { masculine: ["مُعْجَمٌ", "دُولَارٌ"], feminine: ["صَفْحَةٌ", "رُوبِيَّةٌ"] },
+  2: { masculine: ["مَصْرِفٌ", "بَرِيدٌ"], feminine: ["بَرْقِيَّةٌ"] },
+  3: { masculine: ["كَوْكَبٌ", "مَهْجَعٌ", "فَرِيقٌ", "شَقِيقٌ", "لَاعِبٌ"], feminine: [] },
+  5: { masculine: ["جَوَابٌ", "خُبْزٌ", "الْعِنَبُ", "الْمَوْزُ", "التِّينُ", "الْبَقَّالُ"], feminine: ["حَيَّةٌ"] },
+  6: { masculine: [], feminine: ["شُقَّةٌ", "عِمَارَةٌ", "خَادِمَةٌ", "قِطْعَةٌ"] },
+  7: {
+    masculine: ["سُلَّمٌ", "غِلَافٌ", "صَابُونٌ", "بُرْتُقَالٌ", "عَصِيرٌ"],
+    feminine: ["صَحِيفَةٌ", "إِذَاعَةٌ", "مَكْنَسَةٌ", "مَنَارَةٌ", "نَظَّارَةٌ", "لِحْيَةٌ", "صُورَةٌ", "كُرَةٌ", "سَلَّةٌ"],
+  },
+  9: { masculine: ["جَرَسٌ", "طِينٌ", "جَدٌّ", "إِنْسَانٌ"], feminine: ["قَائِمَةٌ", "عَلَاقَةٌ", "لَحْظَةٌ", "أَرْضٌ", "نَارٌ"] },
+  10: { masculine: ["مَصْنَعٌ", "عَامِلٌ", "مِتْرٌ", "عَمَلٌ"], feminine: ["مَسَافَةٌ"] },
+};
+for (const [lessonNo, g] of Object.entries(book2)) nounGenders[positionOf(2, Number(lessonNo))] = g;
+

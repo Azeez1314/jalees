@@ -1,4 +1,4 @@
-import { lessons } from "@/content/lessons";
+import { describePosition, lessons } from "@/content/lessons";
 import { scenarios } from "@/content/scenarios";
 import { findScenario, speakingScenarios } from "@/content/speaking";
 import { getUser } from "@/lib/auth/server";
@@ -63,7 +63,7 @@ export default async function LearnPage() {
 
       <form action={updateLevel} className="mb-8 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-card p-4">
         <label htmlFor="lesson" className="font-medium">
-          I&apos;m practising Madinah Book 1, lesson
+          I&apos;m practising Madinah
         </label>
         <select
           id="lesson"
@@ -72,8 +72,8 @@ export default async function LearnPage() {
           className="rounded-lg border border-line bg-paper px-2 py-1.5"
         >
           {lessons.map((l) => (
-            <option key={l.lessonNo} value={l.lessonNo}>
-              {l.lessonNo}
+            <option key={l.position} value={l.position}>
+              {describePosition(l.position)}
             </option>
           ))}
         </select>
@@ -143,16 +143,16 @@ export default async function LearnPage() {
 
       <section className="flex flex-col gap-8">
         {lessons.map((l) => {
-          const ahead = l.lessonNo > profile.levelLesson;
+          const ahead = l.position > profile.levelLesson;
           return (
-            <div key={l.lessonNo}>
+            <div key={l.position}>
               <h2 className="mb-2 flex items-baseline gap-2 font-semibold">
-                Lesson {l.lessonNo}: {l.title}
+                Book {l.book}, Lesson {l.lessonNo}: {l.title}
                 {ahead && <span className="text-xs font-normal text-muted">(ahead of you)</span>}
               </h2>
               <ul className="flex flex-col gap-2">
                 {scenarios
-                  .filter((s) => s.lessonNo === l.lessonNo)
+                  .filter((s) => s.position === l.position)
                   .map((s) => (
                     <li key={s.id}>
                       <form action={startSession}>

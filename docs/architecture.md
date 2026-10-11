@@ -105,7 +105,7 @@ Isolation: every user-owned table is keyed by `user_id` and every query filters 
 - **Phase 1 — Text conversation loop.** Auth, lessons/scenarios tables (hand-author Book 1; now all 23 lessons), `/api/turn` text-only, recast + display. Usable product for testing pedagogy with 5–10 real learners.
 - **Phase 2 — Voice.** MediaRecorder capture, STT/TTS behind interfaces, transcript confirmation UI, session cap.
 - **Phase 3 — Memory + recap + mistake review.** The retention layer. → built in `web/` (see its README, "Retention"). Recap patterns are deterministic with curated tips; buddy-side Arabic memory is OFF because measured leakage tripled (13% → 39%).
-- **Phase 4 — Placement + Stripe + polish.** Trial → subscription; landing page; creator-partnership launch. → built in `web/` (README: *Billing and access*, *Placement*, *Your data*, *Pre-launch*). Remaining before launch is in `npm run check:launch` — chiefly legal review, live Stripe, hosting, and **content beyond Book 1 (Books 2–3)**.
+- **Phase 4 — Placement + Stripe + polish.** Trial → subscription; landing page; creator-partnership launch. → built in `web/` (README: *Billing and access*, *Placement*, *Your data*, *Pre-launch*). Remaining before launch is in `npm run check:launch` — chiefly legal review, live Stripe, hosting, and **content beyond Book 2 lesson 10 (Book 2 lessons 11–31 and Book 3)**.
 
 ## Top technical risks (watch continuously)
 
@@ -122,3 +122,11 @@ more varied answers (open questions, follow-ups, one correction per turn, option
 (`src/content/speaking.ts`, `sp-` ids, `lesson_id` NULL in the scenarios table). Evaluate with `npm run report:speaking`. Deliberately not
 built until the prototype shows demand: spoken placement, passive/active vocabulary tracking, level ceiling checks, speaking-specific
 recap. Pre-work for Books 2-3 (multi-book lesson addressing, verb lemmas instead of exact forms, prompt size) is tracked separately.
+
+## Multi-book content and the verb engine
+
+Lessons carry a book-local number and a global **position** (Book 1 = 1-23, then Book 2, …); cumulative vocabulary, grammar, verbs, noun
+genders, a learner's level and placement results are all keyed by position. Book 1 hand-lists exact verb forms; from Book 2 verbs are root +
+class entries and `lib/verbs.ts` generates normalized conjugations for the slots (tense × person) a lesson unlocks. The vocabulary checker
+matches exact generated forms, allowing a fused و, the future سـ, the yes/no أ before an unmistakable verb form, and object pronouns once
+taught. Known heuristic limits are listed in `content/lessons.ts` and the web README.

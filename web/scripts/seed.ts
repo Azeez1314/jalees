@@ -25,7 +25,7 @@ async function main() {
       INSERT INTO scenarios (id, lesson_id, title, goal, opening_line, target_structures)
       VALUES (
         ${s.id},
-        (SELECT id FROM lessons WHERE book = 1 AND lesson_no = ${s.lessonNo}),
+        (SELECT id FROM lessons WHERE book = ${s.book ?? 1} AND lesson_no = ${s.lessonNo}),
         ${s.title}, ${s.goal}, ${s.openingLine}, ${JSON.stringify(s.targetStructures)}::jsonb
       )
       ON CONFLICT (id) DO UPDATE

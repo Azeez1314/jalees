@@ -1,6 +1,6 @@
 // Offline checks on the lesson tables themselves: gating of verbs / affixes / feminine forms, and the gender tables.
 // Run: npm run check:lessons
-import { FAR_FEMININE_FROM, FEMININE_FROM, cumulativeVerbs, cumulativeVocab, lessons, normalizeArabic } from "@/content/lessons";
+import { FAR_FEMININE_FROM, FEMININE_FROM, cumulativeVerbs, cumulativeVocab, describePosition, lessons, normalizeArabic, positionOf } from "@/content/lessons";
 import { cumulativeGenders, nounGenders } from "@/content/genders";
 import { checkVocab } from "@/lib/vocab";
 import { buildBuddySystemPrompt } from "@/lib/prompt";
@@ -22,8 +22,13 @@ const no = (text: string, n: number, label = text) => {
 };
 
 // ---- structure -------------------------------------------------------------------------------------------------
-check(lessons.every((l, i) => l.lessonNo === i + 1), "lessons are numbered 1..N with no gaps");
-check(lessons.every((l) => l.book === 1), "all lessons are Book 1");
+const books = [...new Set(lessons.map((l) => l.book))];
+for (const b of books) {
+  const nos = lessons.filter((l) => l.book === b).map((l) => l.lessonNo);
+  check(nos.every((n, i) => n === i + 1), `Book ${b}: lessons are numbered 1..${nos.length} with no gaps`);
+}
+check(lessons.every((l, i) => l.position === i + 1), "global positions run 1..N across books");
+check(lessons.filter((l) => l.book === 1).every((l) => l.position === l.lessonNo), "Book 1 positions equal their lesson numbers (nothing written against Book 1 moves)");
 check(lessons.every((l) => l.newGrammar.length > 0), "every lesson has grammar notes");
 check(lessons.every((l) => !l.newGrammar.some((g) => /\bهل\b/.test(g) && !/NOT used/.test(g))), "no grammar note teaches هل");
 
@@ -108,20 +113,55 @@ no("قَلَمٌ أَزْرَقُ", 21, "colours before lesson 22");
 ok("قَلَمٌ أَحْمَرُ وَمِنْدِيلٌ أَبْيَضُ. قَالَ يُوسُفُ. قَالَتْ فَاطِمَةُ. مَنَادِيلُ", 22);
 no("هَاتِ يَا أُسْتَاذُ", 22, "هات before lesson 23");
 ok("هَاتِ يَا أُسْتَاذُ. ذَهَبَ أَحْمَدُ إِلَى مَكَّةَ", 23);
-check(cumulativeVerbs(11).includes("أُحِبُّ") && cumulativeVerbs(23).length === lessons.flatMap((l) => l.newVerbs ?? []).length, "cumulativeVerbs follows the later lessons too");
+check(cumulativeVerbs(11).includes("أُحِبُّ") && cumulativeVerbs(23).length === lessons.filter((l) => l.book === 1).flatMap((l) => l.newVerbs ?? []).length, "cumulativeVerbs follows the later lessons too");
 check(buildBuddySystemPrompt(14, "g").includes("so no ") && !/so no [^)]*ذَهَبْنَا/.test(buildBuddySystemPrompt(14, "g")), "the prompt's 'do not change the form' examples exclude forms that ARE allowed");
 check(buildBuddySystemPrompt(16, "g").includes("هَذِهِ كُتُبٌ جَدِيدَةٌ") && buildBuddySystemPrompt(18, "g").includes("هَذَانِ"), "later lessons add plural and dual agreement rules to the prompt");
 
+
+// ---- Book 2: positions, generated verbs, object pronouns, ب ---------------------------------------------------------------
+const B2 = (n: number) => positionOf(2, n);
+check(B2(1) === 24 && describePosition(B2(4)) === "Book 2, Lesson 4", "Book 2 positions follow Book 1 (lesson 1 = position 24)");
+no("إِنَّهُ تَاجِرٌ", 23, "إنّ before Book 2");
+ok("إِنَّهُ تَاجِرٌ. لَعَلَّكَ بِخَيْرٍ. إِنَّنِي مِنَ الْهِنْدِ", B2(1));
+no("بِمِائَةِ رُوبِيَّةٍ", 23, "the ب prefix before Book 2");
+ok("بِمِائَةِ رُوبِيَّةٍ. لَيْسَ بِطَالِبٍ", B2(2), "بـ + noun (lesson 2)");
+// the past tense unlocks person by person
+no("فَتَحَ حَامِدٌ الْبَابَ", B2(4), "فتح before it is taught (lesson 5)");
+ok("فَتَحَ حَامِدٌ الْبَابَ. فَتَحَتْ. فَتَحُوا. فَتَحْنَ. فَتَحْتُ. فَتَحْتَ", B2(5), "all lesson-4 persons of a lesson-5 verb");
+no("فَتَحْنَا", B2(6), "'we opened' before lesson 7");
+ok("فَتَحْنَا. فَتَحْتُمْ. فَتَحْتُنَّ. فَتَحْتِ", B2(7));
+// object pronouns unlock separately
+no("فَتَحْتُهُ", B2(4), "a verb + object pronoun before lesson 5");
+ok("فَتَحْتُهُ. كَتَبْتُهَا. فَهِمُوهُ", B2(5), "object ه / ها");
+no("رَأَيْتُهُمْ", B2(5), "object هم before lesson 6");
+ok("رَأَيْتُهُمْ. رَأَيْتُهُنَّ. رَأَيْتُهَا", B2(6));
+no("خَلَقَنِي", B2(8), "object ني before lesson 9");
+ok("خَلَقَنِي. خَلَقَنَا. خَلَقَكَ. خَلَقَكُمْ. أَفَهِمْتُمُوهُ؟", B2(9));
+// the present tense arrives in lesson 10, person by person
+no("يَذْهَبُ أَبِي", B2(9), "the present before lesson 10");
+ok("يَذْهَبُ أَبِي. تَذْهَبُ أُمِّي. أَذْهَبُ. لَا يَكْتُبُ", B2(10), "present he / she / I");
+no("يَذْهَبُونَ", B2(10), "'they go' (present plural) — not taught by lesson 10");
+ok("أَتَذْهَبُ؟ أَيَرْجِعُ؟", B2(10), "yes/no أ before a taught present form");
+no("أَذْهَبُ إِلَى السُّوقِ", B2(9), "I go (present) before lesson 10");
+// irregular verbs carry their own forms
+ok("جَاءَ. جَاءَتْ. جَاؤُوا. جِئْتُ", B2(7), "jaa'a: all taught persons");
+ok("رَأَيْتُ. رَأَوْا", B2(6), "ra'aa past");
+ok("يَرَى. أَرَى", B2(10), "ra'aa present");
+ok("كَانَ الْمُدَرِّسُ فِي الْفَصْلِ. كَانَتْ. كُنَّا", B2(7), "kaana");
+ok("قَالَ. قَالَتْ. قُلْتُ. قَالُوا. قُلْنَ", B2(4), "qaala: hollow-verb shortening");
+check(buildBuddySystemPrompt(B2(6), "g").includes("رَأَى") && buildBuddySystemPrompt(B2(6), "g").includes("Taught conjugations"), "the prompt lists the taught verbs and conjugations");
+check(!buildBuddySystemPrompt(B2(6), "g").includes("@"), "no markers leak into the Book 2 prompt");
+
 // ---- gender tables ---------------------------------------------------------------------------------------------
 const key = (w: string) => normalizeArabic(w).replace(/^ال(?=.)/, "");
-for (const upto of [1, 5, 10, 16, 23]) {
+for (const upto of [1, 5, 10, 16, 23, 28, 33]) {
   const g = cumulativeGenders(upto);
   const m = new Set(g.masculine.map(key));
   const f = g.feminine.map(key);
   check(f.every((w) => !m.has(w)), `L${upto}: no noun is listed as both masculine and feminine`, f.filter((w) => m.has(w)).join(", "));
 }
 const vocabByLesson = new Map<number, Set<string>>();
-for (const l of lessons) vocabByLesson.set(l.lessonNo, cumulativeVocab(l.lessonNo));
+for (const l of lessons) vocabByLesson.set(l.position, cumulativeVocab(l.position));
 for (const [no, g] of Object.entries(nounGenders)) {
   const set = vocabByLesson.get(Number(no));
   const missing = set ? [...g.masculine, ...g.feminine].filter((w) => !set.has(normalizeArabic(w))) : ["(no such lesson)"];
@@ -133,7 +173,7 @@ const p3 = buildBuddySystemPrompt(3, "goal");
 const p4 = buildBuddySystemPrompt(4, "goal");
 const p6 = buildBuddySystemPrompt(6, "goal");
 check(p3.includes("COMPLETELY FORBIDDEN") && !p3.includes("ONLY these exact verb forms"), "lesson 3 prompt bans every verb");
-check(p4.includes("ONLY these exact verb forms: ذَهَبَ، خَرَجَ") && !p4.includes("COMPLETELY FORBIDDEN"), "lesson 4 prompt lists exactly the allowed verbs");
+check(p4.includes("ONLY the following") && p4.includes("ذَهَبَ، خَرَجَ") && !p4.includes("COMPLETELY FORBIDDEN"), "lesson 4 prompt lists exactly the allowed verbs");
 check(p3.includes("NOT taught yet") && !p6.includes("NOT taught yet"), "feminine هذه/تلك is withheld until lesson 6");
 check(![p3, p4, p6].some((p) => p.includes("@")), "no affix markers leak into the prompt");
 check(p4.includes("Never use هَلْ"), "the prompt tells the model to use أَ, not هَلْ");

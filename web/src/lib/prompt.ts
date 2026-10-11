@@ -1,5 +1,6 @@
 import { cumulativeGenders } from "@/content/genders";
-import { FAR_FEMININE_FROM, FEMININE_FROM, cumulativeGrammar, cumulativeVerbs, cumulativeVocab, normalizeArabic, praisePhrases } from "@/content/lessons";
+import { FAR_FEMININE_FROM, FEMININE_FROM, cumulativeGrammar, cumulativeVerbLemmas, cumulativeVerbs, cumulativeVocab, describePosition, normalizeArabic, praisePhrases, unlockedSlots } from "@/content/lessons";
+import type { Person, Tense, VerbSlot } from "@/content/types";
 
 export const ERROR_TYPES = [
   "gender_agreement",
@@ -29,32 +30,20 @@ export function buildBuddySystemPrompt(
     .map((g) => `- ${g}`)
     .join("\n");
 
-  const verbs = cumulativeVerbs(lessonNo);
   const genders = cumulativeGenders(lessonNo);
 
-  return `You are Jalees, a warm Arabic conversation buddy for a self-study learner working through Madinah Book 1. You speak only Fus'ha (Modern Standard / Classical Arabic), with Islamic adab, slightly above the learner's level but never beyond it.
+  return `You are Jalees, a warm Arabic conversation buddy for a self-study learner working through the Madinah books. You speak only Fus'ha (Modern Standard / Classical Arabic), with Islamic adab, slightly above the learner's level but never beyond it.
 
-HARD CONSTRAINT: the learner has only studied through Lesson ${lessonNo}. You MUST NOT use any vocabulary or grammatical structure beyond what is listed below, even if the conversation would naturally call for it. If you cannot express something within these limits, simplify or omit it rather than reach for unavailable Arabic.
+HARD CONSTRAINT: the learner has only studied through ${describePosition(lessonNo)}. You MUST NOT use any vocabulary or grammatical structure beyond what is listed below, even if the conversation would naturally call for it. If you cannot express something within these limits, simplify or omit it rather than reach for unavailable Arabic.
 
-${
-  verbs.length
-    ? `VERBS: you may use ONLY these exact verb forms: ${verbs.join("، ")} — spelled exactly like that. Do not change the person, number or tense of anything (${forbiddenVerbExamples(verbs)}), and do not use ANY other verb, even a polite or common one: أُرِيدُ, تُرِيدُ, أَعْطِنِي, تَفَضَّلْ, آخُذُ, يُمْكِنُ, أَسْتَطِيعُ, كَانَ. A "verb" is any word that changes form depending on who does the action. Before you finalize your reply, reread it: if a word like that is not exactly one of the verb forms above, delete that sentence and say it as a plain noun sentence or a short question with the allowed words instead. It is fine to leave a request unanswered if answering would need a forbidden verb.
-`
-    : `VERBS ARE COMPLETELY FORBIDDEN AT THIS LESSON — this is the single most common mistake, watch for it specifically. A "verb" is any word that changes form depending on who is doing the action (أنا/أنتَ/أنتِ/هو/هي) — for example أُرِيدُ/تُرِيدُ/يُرِيدُ (want), آخُذُ/تَأْخُذُ/يَأْخُذُ (take), أَسْتَعِيرُ/تَسْتَعِيرُ/يَسْتَعِيرُ (borrow), يُمْكِنُ (is possible), ذَهَبَ (went), جَلَسَ (sat), أَعْطِنِي (give me). None of these — or ANY word built the same way — may appear in your reply, even disguised as a polite question or offer. Before you finalize your reply, reread it and check: does any word change if I swap who's doing it? If yes, delete that whole sentence and replace it with a plain noun sentence using only the allowed vocabulary above, or a short question using only the question words in the allowed vocabulary. It is completely fine — expected, even — to leave the learner's request (e.g. "can I borrow this?") without a real answer if answering it truthfully would require a verb. Restate a fact or ask a simple allowed question instead.
-
-Example of the mistake to avoid:
-  Learner says something that invites an offer or action.
-  WRONG (uses verbs): "هَلْ تُرِيدُ أَنْ تَسْتَعِيرَ قَلَمًا؟" ("Do you want to borrow a pen?" — تريد and تستعير are both verbs.)
-  RIGHT (pure noun sentence, no verb): "هَذَا قَلَمٌ. وَمَا هَذَا؟" ("This is a pen. And what is this?")
-`
-}
+${verbSection(lessonNo)}
 
 YES/NO QUESTIONS: this course forms them by putting the interrogative أَ in front of the first word (for example أَهَذَا بَيْتٌ؟). Never use هَلْ.
 
-ALLOWED VOCABULARY (cumulative through Lesson ${lessonNo}):
+ALLOWED VOCABULARY (cumulative through ${describePosition(lessonNo)}):
 ${vocab}
 
-ALLOWED GRAMMAR (cumulative through Lesson ${lessonNo}):
+ALLOWED GRAMMAR (cumulative through ${describePosition(lessonNo)}):
 ${grammar}
 
 NOUN GENDER (use this to judge agreement — do not rely on your own guess):
@@ -124,8 +113,59 @@ function agreementRules(lessonNo: number): string {
 }
 
 /** A few verb forms that look like the allowed ones but are not, for the "do not change the person or tense" instruction. */
-function forbiddenVerbExamples(allowed: string[]): string {
-  const taught = new Set(allowed.map(normalizeArabic));
-  const candidates = ["ذَهَبْتُ", "ذَهَبَتْ", "ذَهَبُوا", "ذَهَبْنَا", "يَذْهَبُ", "تَذْهَبُ", "اذْهَبْ", "يَخْرُجُ", "يَجْلِسُ"];
-  return "so no " + candidates.filter((c) => !taught.has(normalizeArabic(c))).slice(0, 5).join(", ");
+function forbiddenVerbExamples(allowed: Set<string>): string {
+  const isAllowed = (w: string) => allowed.has(`@v:${normalizeArabic(w)}`) || allowed.has(`@g:${normalizeArabic(w)}`);
+  const candidates = ["ذَهَبْتُ", "ذَهَبَتْ", "ذَهَبُوا", "ذَهَبْنَا", "يَذْهَبُ", "تَذْهَبُ", "اذْهَبْ", "يَخْرُجُ", "يَجْلِسُ", "سَيَذْهَبُ"];
+  const bad = candidates.filter((c) => !isAllowed(c)).slice(0, 5);
+  return bad.length ? "so no " + bad.join(", ") : "stay inside the forms listed";
+}
+
+const PERSON_LABEL: Record<Person, string> = {
+  "3ms": "he", "3fs": "she", "3md": "they two (m.)", "3fd": "they two (f.)", "3mp": "they (m.)", "3fp": "they (f.)",
+  "2ms": "you (m.)", "2fs": "you (f.)", "2d": "you two", "2mp": "you (m. pl.)", "2fp": "you (f. pl.)", "1s": "I", "1p": "we",
+};
+const TENSE_LABEL: Record<Tense, string> = {
+  past: "past", pres: "present", subj: "subjunctive (after أَنْ / لَنْ)", juss: "jussive (after لَمْ)", imp: "command",
+};
+
+/** "past: he, she, I, we · present: he, I" — the conjugations the learner has been taught, grouped by tense. */
+function describeSlots(slots: VerbSlot[]): string {
+  const byTense = new Map<Tense, Person[]>();
+  for (const slot of slots) {
+    const [t, p] = slot.split(":") as [Tense, Person];
+    byTense.set(t, [...(byTense.get(t) ?? []), p]);
+  }
+  return (Object.keys(TENSE_LABEL) as Tense[])
+    .filter((t) => byTense.has(t))
+    .map((t) => `${TENSE_LABEL[t]}: ${byTense.get(t)!.map((p) => PERSON_LABEL[p]).join(", ")}`)
+    .join(" · ");
+}
+
+/** What the buddy may do with verbs at this lesson: nothing, hand-listed forms (Book 1), and/or conjugate taught verbs. */
+function verbSection(lessonNo: number): string {
+  const exact = cumulativeVerbs(lessonNo);
+  const lemmas = cumulativeVerbLemmas(lessonNo);
+  const slots = unlockedSlots(lessonNo);
+  const allowedForms = cumulativeVocab(lessonNo);
+
+  if (!exact.length && !(lemmas.length && slots.length)) {
+    return `VERBS ARE COMPLETELY FORBIDDEN AT THIS LESSON — this is the single most common mistake, watch for it specifically. A "verb" is any word that changes form depending on who is doing the action (أنا/أنتَ/أنتِ/هو/هي) — for example أُرِيدُ/تُرِيدُ/يُرِيدُ (want), آخُذُ/تَأْخُذُ/يَأْخُذُ (take), أَسْتَعِيرُ/تَسْتَعِيرُ/يَسْتَعِيرُ (borrow), يُمْكِنُ (is possible), ذَهَبَ (went), جَلَسَ (sat), أَعْطِنِي (give me). None of these — or ANY word built the same way — may appear in your reply, even disguised as a polite question or offer. Before you finalize your reply, reread it and check: does any word change if I swap who's doing it? If yes, delete that whole sentence and replace it with a plain noun sentence using only the allowed vocabulary above, or a short question using only the question words in the allowed vocabulary. It is completely fine — expected, even — to leave the learner's request (e.g. "can I borrow this?") without a real answer if answering it truthfully would require a verb. Restate a fact or ask a simple allowed question instead.
+
+Example of the mistake to avoid:
+  Learner says something that invites an offer or action.
+  WRONG (uses verbs): "هَلْ تُرِيدُ أَنْ تَسْتَعِيرَ قَلَمًا؟" ("Do you want to borrow a pen?" — تريد and تستعير are both verbs.)
+  RIGHT (pure noun sentence, no verb): "هَذَا قَلَمٌ. وَمَا هَذَا؟" ("This is a pen. And what is this?")
+`;
+  }
+
+  const parts: string[] = [];
+  if (exact.length) parts.push(`These verb forms, spelled exactly like this and in no other form: ${exact.join("، ")}.`);
+  if (lemmas.length && slots.length) {
+    parts.push(
+      `These verbs, which you may conjugate ONLY in the tenses and persons the learner has been taught: ${lemmas
+        .map((v) => `${v.lemma} (${v.gloss})`)
+        .join("، ")}. Taught conjugations — ${describeSlots(slots)}. Anything else is forbidden: a person, tense or mood not listed, or a verb not listed.`
+    );
+  }
+  return `VERBS: you may use ONLY the following. ${parts.join(" ")} Do not change the person, number or tense of anything (${forbiddenVerbExamples(allowedForms)}), and do not use ANY other verb, even a polite or common one: أُرِيدُ, أَعْطِنِي, تَفَضَّلْ, آخُذُ, يُمْكِنُ, أَسْتَطِيعُ. A "verb" is any word that changes form depending on who does the action. Before you finalize your reply, reread it: if a word like that is not allowed above, delete that sentence and say it as a plain noun sentence or a short question with the allowed words instead. It is fine to leave a request unanswered if answering would need a forbidden verb.`;
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { lessons } from "@/content/lessons";
+import { describePosition, lessons } from "@/content/lessons";
 import { ArabicKeyboard, useArabicKeyboard } from "../session/[id]/ArabicKeyboard";
 import { MAX_RECORD_SECONDS, useRecorder } from "../session/[id]/useRecorder";
 
@@ -113,11 +113,11 @@ export function PlacementFlow({ previousLesson }: { previousLesson: number | nul
   }
 
   if (phase === "result" && result) {
-    const lesson = lessons.find((l) => l.lessonNo === result.lesson);
+    const lesson = lessons.find((l) => l.position === result.lesson);
     return (
       <div className="mt-4 rounded-xl border border-line bg-card p-5" role="status">
         <p className="text-sm text-muted">Your starting point</p>
-        <p className="mt-1 text-2xl font-semibold">Madinah Book 1, Lesson {result.lesson}</p>
+        <p className="mt-1 text-2xl font-semibold">{describePosition(result.lesson)}</p>
         {lesson && <p className="text-muted">{lesson.title}</p>}
         <p className="mt-3">
           {result.beyondContent
