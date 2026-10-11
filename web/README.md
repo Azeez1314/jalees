@@ -38,6 +38,8 @@ restates mistakes correctly ("recast"), and shows replies fully diacritized with
 | `npm run check:stripe` | **Stripe test mode only** (refuses live keys): your Price is $9 USD monthly, and a real Checkout Session and Portal session can be created. No payment is made |
 | `npm run check:launch` | Pre-launch checklist: fails while placeholders, draft legal pages, test-mode Stripe or a localhost APP_URL remain |
 | `npm run metrics` | The spec's launch metrics (activation, engagement, D7/D30, trial→paid, cost per learner-day), aggregates only |
+| `npm run check:speaking` | Offline checks for the speaking-track prototype (content, prompt, correction sanity) |
+| `npm run report:speaking` | Prototype evaluation from stored sessions: words per turn, fixes vs upgrades, stretch words |
 | `npm run check:lessons` | Offline checks on the lesson tables: verb/affix/feminine gating, gender tables, the prompt follows the lesson |
 | `npm run check:content` | Fails if any scenario opener uses vocab above its lesson (run after editing content) |
 | `npm run check:recast` | Unit checks for the generic recast safety validator (no network) |
@@ -219,6 +221,25 @@ To add a lesson: extend `lessons.ts` (and `genders.ts`), add scenarios (`opening
 placement item, run `npm run audio:openers`, `npm run db:seed`, then `check:lessons`, `check:content`, `check:placement`.
 
 `../phase0-eval` is the frozen Phase 0 prototype (its own tokenizer and prompts); only its `lessons.ts` data is kept in step.
+
+## Speaking track (prototype)
+
+For learners who already understand Arabic (they have finished Madinah Books 1-3 or equivalent) and want to *speak* it more fluently.
+It is a deliberately small experiment, not a finished feature: it exists to find out whether this segment is real and what they want.
+
+- **Different job from the ladder.** The ladder keeps the buddy inside what you've studied (a hard whitelist, retries on leaks). The
+  speaking track has **no lesson whitelist**: the buddy speaks upper-intermediate MSA and keeps asking for more — one open question at a
+  time, follow-ups on details, a starter phrase when you're stuck (`src/lib/speaking-prompt.ts`, `src/lib/speaking-turn.ts`).
+- **Corrections** are limited to one per turn, ignore tashkeel / spelling / case endings, and there is no "say it again" loop. When a
+  sentence is correct but basic the buddy may offer an **upgrade** (shown in the same card, never added to the review bank).
+- **Guards that still apply:** the scripture rule, praise frequency, and a check that a correction really quotes and changes what you said.
+- **Content** is by situation, not grammar: five scenarios in `src/content/speaking.ts` (`sp-` ids): about me, a normal day, yesterday,
+  an opinion with reasons, a role-play phoning a teacher. They appear on `/learn` under "Speaking practice (Prototype)".
+- **Try it offline of the UI:** `npm run try:turn -- sp-yesterday "ذهبت إلى السوق" "…"`. **Offline checks:** `npm run check:speaking`.
+- **Evaluate it:** `npm run report:speaking` reads stored sessions — words per learner turn (and first→last turn, i.e. do answers grow),
+  voice use, corrections vs upgrades, and the words used outside the Book 1 lists as a rough stretch measure.
+- **Not built yet** (decide after the prototype is used): a spoken placement, passive-vs-active vocabulary tracking over Books 1-3,
+  a speaking-specific recap and mistake bank, and any ceiling check — Books 2-3 vocabulary tables don't exist yet.
 
 ## Known limitations
 

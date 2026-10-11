@@ -1,4 +1,4 @@
-import { scenarios } from "@/content/scenarios";
+import { findScenario } from "@/content/speaking";
 import { addFact, listFacts } from "@/lib/memory";
 import { countVoiceTurns, getRecap, getTurns, saveRecap, type SessionRow } from "@/lib/queries";
 import { buildPatterns, generateNarrative, type Recap } from "@/lib/recap";
@@ -14,7 +14,7 @@ export async function getOrCreateRecap(userId: string, session: SessionRow): Pro
   const existing = await getRecap(userId, session.id);
   if (existing) return { recap: existing };
 
-  const scenario = scenarios.find((s) => s.id === session.scenarioId);
+  const scenario = findScenario(session.scenarioId);
   if (!scenario) return { error: "Scenario no longer exists", status: 410 };
 
   const turns = await getTurns(session.id);

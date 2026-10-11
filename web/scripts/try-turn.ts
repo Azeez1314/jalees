@@ -4,6 +4,8 @@
 // Needs OPENAI_API_KEY (in .env.local or the environment).
 import { config } from "dotenv";
 import { scenarios } from "@/content/scenarios";
+import { findScenario, speakingScenarios } from "@/content/speaking";
+import { generateSpeakingTurn } from "@/lib/speaking-turn";
 import { generateBuddyTurn, type HistoryTurn } from "@/lib/turn";
 
 config({ path: ".env.local" });
@@ -17,9 +19,9 @@ async function main() {
     else rest.push(args[i]);
   }
   const [scenarioId, ...lines] = rest;
-  const scenario = scenarios.find((s) => s.id === scenarioId);
+  const scenario = findScenario(scenarioId);
   if (!scenario || !lines.length) {
-    console.error(`Usage: npm run try:turn -- <scenarioId> "msg" ...\nScenarios: ${scenarios.map((s) => s.id).join(", ")}`);
+    console.error(`Usage: npm run try:turn -- <scenarioId> "msg" ...\nScenarios: ${[...scenarios, ...speakingScenarios].map((s) => s.id).join(", ")}`);
     process.exit(1);
   }
 
@@ -27,7 +29,10 @@ async function main() {
   const history: HistoryTurn[] = [{ role: "buddy", text: scenario.openingLine }];
 
   for (const learnerText of lines) {
-    const r = await generateBuddyTurn({ scenario, history, learnerText, recentMistakes: [], memoryFacts: facts });
+    const r =
+      scenario.track === "speaking"
+        ? await generateSpeakingTurn({ scenario, history, learnerText })
+        : await generateBuddyTurn({ scenario, history, learnerText, recentMistakes: [], memoryFacts: facts });
     console.log(`learner: ${learnerText}`);
     console.log(`buddy:   ${r.textDiacritized}`);
     if (r.recast) console.log(`  recast [${r.recast.errorType}]: "${r.recast.original}" -> "${r.recast.corrected}"  (promptRepeat=${r.promptRepeat})`);

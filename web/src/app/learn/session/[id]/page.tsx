@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { scenarios } from "@/content/scenarios";
+import { findScenario } from "@/content/speaking";
 import { getUser } from "@/lib/auth/server";
 import { getOrCreateProfile, getSession, getTurns } from "@/lib/queries";
 import { getAccess } from "@/lib/subscriptions";
@@ -15,7 +15,7 @@ export default async function SessionPage({ params }: PageProps<"/learn/session/
 
   const session = await getSession(user.id, id);
   if (!session) notFound();
-  const scenario = scenarios.find((s) => s.id === session.scenarioId);
+  const scenario = findScenario(session.scenarioId);
   if (!scenario) notFound();
 
   const [profile, turns, usage, access] = await Promise.all([

@@ -2,9 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { scenarios } from "@/content/scenarios";
+import { findScenario } from "@/content/speaking";
 import { stripTashkeel } from "@/lib/arabic";
 import { getUser } from "@/lib/auth/server";
+import { maxContentLesson } from "@/lib/placement";
 import { getAccess } from "@/lib/subscriptions";
 import { addFact, deleteAllFacts, deleteFact } from "@/lib/memory";
 import { createSession, getOrCreateProfile, updateProfile, type TashkeelPref } from "@/lib/queries";
@@ -17,7 +18,7 @@ async function requireUser() {
 
 export async function startSession(formData: FormData) {
   const user = await requireUser();
-  const scenario = scenarios.find((s) => s.id === formData.get("scenarioId"));
+  const scenario = findScenario(formData.get("scenarioId"));
   if (!scenario) redirect("/learn");
   // Conversations need a trial or subscription; everything else (review, memory, recap) stays open.
   if (!(await getAccess(user.id)).allowed) redirect("/learn/billing?reason=expired");
@@ -33,7 +34,7 @@ export async function startSession(formData: FormData) {
 export async function updateLevel(formData: FormData) {
   const user = await requireUser();
   const lesson = Number(formData.get("lesson"));
-  if (!Number.isInteger(lesson) || lesson < 1 || lesson > 5) return;
+  if (!Number.isInteger(lesson) || lesson < 1 || lesson > maxContentLesson()) return;
   await getOrCreateProfile(user.id, user.name ?? null);
   await updateProfile(user.id, { levelLesson: lesson });
   revalidatePath("/learn");

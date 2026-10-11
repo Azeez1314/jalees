@@ -4,9 +4,12 @@
 import { config } from "dotenv";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { scenarios } from "@/content/scenarios";
+import { scenarios as ladderScenarios } from "@/content/scenarios";
+import { speakingScenarios } from "@/content/speaking";
 import { OPENER_AUDIO_DIR, openerAudioHash } from "@/lib/ai/opener-audio";
 import { synthesize } from "@/lib/ai/tts";
+
+const scenarios = [...ladderScenarios, ...speakingScenarios];
 
 config({ path: ".env.local" });
 

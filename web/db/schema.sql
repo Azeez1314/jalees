@@ -155,3 +155,6 @@ CREATE TABLE IF NOT EXISTS placement_attempts (
   answers        jsonb NOT NULL DEFAULT '[]'
 );
 CREATE INDEX IF NOT EXISTS placement_attempts_user_idx ON placement_attempts (user_id, started_at DESC);
+
+-- Speaking track (prototype): scenarios that belong to no lesson of the ladder (src/content/speaking.ts).
+ALTER TABLE scenarios ALTER COLUMN lesson_id DROP NOT NULL;

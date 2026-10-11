@@ -1,6 +1,7 @@
 // Fails if any scenario opener uses vocab above its lesson. Run: npm run check:content
 import { cumulativeVocab, lessons, praisePhrases } from "@/content/lessons";
 import { scenarios } from "@/content/scenarios";
+import { speakingScenarios } from "@/content/speaking";
 import { OPENER_AUDIO_DIR, openerAudioHash } from "@/lib/ai/opener-audio";
 import { checkVocab } from "@/lib/vocab";
 import { existsSync, readFileSync } from "node:fs";
@@ -42,8 +43,18 @@ for (const s of scenarios) {
   }
 }
 
+// Speaking-track openers have no lesson whitelist, but they still need their pre-rendered audio.
+for (const s of speakingScenarios) {
+  if (!existsSync(join(audioDir, `${s.id}.mp3`)) || audioManifest[s.id] !== openerAudioHash(s.openingLine)) {
+    console.error(`✗ ${s.id}: opener audio is missing or stale — run npm run audio:openers`);
+    failures++;
+  } else {
+    console.log(`✓ ${s.id} (speaking)`);
+  }
+}
+
 if (failures) {
   console.error(`\n${failures} scenario(s) failed.`);
   process.exit(1);
 }
-console.log(`\nAll ${scenarios.length} scenario openers are within their lesson's vocab and have up-to-date audio.`);
+console.log(`\nAll ${scenarios.length} ladder scenario openers are within their lesson's vocab and have up-to-date audio.`);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { scenarios } from "@/content/scenarios";
+import { findScenario } from "@/content/speaking";
 import { getUser } from "@/lib/auth/server";
 import { listFacts } from "@/lib/memory";
 import { countDueMistakes } from "@/lib/mistake-bank";
@@ -17,7 +17,7 @@ export default async function RecapPage({ params }: PageProps<"/learn/session/[i
 
   const session = await getSession(user.id, id);
   if (!session) notFound();
-  const scenario = scenarios.find((s) => s.id === session.scenarioId);
+  const scenario = findScenario(session.scenarioId);
   if (!scenario) notFound();
 
   const recap = await getRecap(user.id, id);

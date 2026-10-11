@@ -1,5 +1,6 @@
 import { lessons } from "@/content/lessons";
 import { scenarios } from "@/content/scenarios";
+import { findScenario, speakingScenarios } from "@/content/speaking";
 import { getUser } from "@/lib/auth/server";
 import { listFacts } from "@/lib/memory";
 import { countDueMistakes } from "@/lib/mistake-bank";
@@ -84,7 +85,7 @@ export default async function LearnPage() {
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">Pick up where you left off</h2>
           <ul className="flex flex-col gap-2">
             {recent.map((s) => {
-              const sc = scenarios.find((x) => x.id === s.scenarioId);
+              const sc = findScenario(s.scenarioId);
               return (
                 <li key={s.id} className="flex items-stretch gap-2">
                   <Link
@@ -111,6 +112,34 @@ export default async function LearnPage() {
           </ul>
         </section>
       )}
+
+      <section className="mb-10">
+        <h2 className="mb-1 flex items-baseline gap-2 font-semibold">
+          Speaking practice
+          <span className="rounded bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Prototype</span>
+        </h2>
+        <p className="mb-2 text-sm text-muted">
+          For when you understand Arabic but want to speak more fluently. No lesson limits: the buddy talks at an upper-intermediate
+          level and keeps asking you for more. Best with your voice.
+        </p>
+        <ul className="flex flex-col gap-2">
+          {speakingScenarios.map((s) => (
+            <li key={s.id}>
+              <form action={startSession}>
+                <input type="hidden" name="scenarioId" value={s.id} />
+                <button
+                  disabled={!access.allowed}
+                  title={access.allowed ? undefined : "Your free trial has ended — subscribe to start a conversation"}
+                  className="w-full rounded-lg border border-line bg-card px-4 py-3 text-left hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-card"
+                >
+                  <span className="block font-medium">{s.title}</span>
+                  <span className="block text-sm text-muted">{s.goal}</span>
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="flex flex-col gap-8">
         {lessons.map((l) => {

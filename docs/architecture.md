@@ -113,3 +113,12 @@ Isolation: every user-owned table is keyed by `user_id` and every query filters 
 2. **STT on accented learner speech** — benchmark Whisper vs Munsit on real recordings from your test learners, not native-speaker samples.
 3. **Latency** — if turn round-trip exceeds ~5s, stream the LLM text to screen while TTS generates.
 4. **Diacritization quality** — The LLM's tashkeel is generally good but verify per-lesson — cheaper models drift more; a small post-check pass (e.g., CAMeL Tools) can flag anomalies.
+
+## Speaking track (prototype)
+
+A second mode for learners who understand Arabic but speak hesitantly (Books 1-3 and beyond). Same engine (auth, sessions, turns, TTS/STT,
+scripture guard), different turn function: `generateSpeakingTurn` has no lesson whitelist and instead steers the buddy toward longer,
+more varied answers (open questions, follow-ups, one correction per turn, optional "upgrade"). Scenarios are by situation
+(`src/content/speaking.ts`, `sp-` ids, `lesson_id` NULL in the scenarios table). Evaluate with `npm run report:speaking`. Deliberately not
+built until the prototype shows demand: spoken placement, passive/active vocabulary tracking, level ceiling checks, speaking-specific
+recap. Pre-work for Books 2-3 (multi-book lesson addressing, verb lemmas instead of exact forms, prompt size) is tracked separately.

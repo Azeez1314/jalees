@@ -9,6 +9,8 @@
     "lint": "eslint",
     "check:content": "tsx scripts/check-content.ts",
     "check:lessons": "tsx scripts/check-lessons.ts",
+    "check:speaking": "tsx scripts/check-speaking.ts",
+    "report:speaking": "tsx scripts/speaking-report.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "try:turn": "tsx scripts/try-turn.ts",

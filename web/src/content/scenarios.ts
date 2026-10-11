@@ -1,6 +1,8 @@
 export interface Scenario {
   /** Stable slug — used as the primary key in the scenarios table. */
   id: string;
+  /** "speaking" = the prototype speaking track (content/speaking.ts), which is not constrained by a lesson whitelist. Default: the lesson ladder. */
+  track?: "ladder" | "speaking";
   lessonNo: number;
   title: string;
   /** What the learner is practising; injected into the buddy's system prompt. */

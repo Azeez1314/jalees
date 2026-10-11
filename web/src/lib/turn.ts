@@ -43,7 +43,7 @@ export interface BuddyTurnResult {
   recastRejected: boolean;
 }
 
-interface Draft {
+export interface Draft {
   raw: string;
   parsed: Record<string, unknown>;
   reply: string;
@@ -54,7 +54,7 @@ function parseJson(text: string): Record<string, unknown> {
   return JSON.parse((fenced ? fenced[1] : text).trim());
 }
 
-function normalizeRecast(raw: unknown): Recast | null {
+export function normalizeRecast(raw: unknown): Recast | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   if (typeof r.original !== "string" || typeof r.corrected !== "string") return null;
@@ -64,7 +64,7 @@ function normalizeRecast(raw: unknown): Recast | null {
 }
 
 /** One model call returning a usable draft. Empty or malformed responses happen occasionally — try once more before failing. */
-async function draft(messages: OpenAI.Chat.ChatCompletionMessageParam[]): Promise<Draft> {
+export async function draft(messages: OpenAI.Chat.ChatCompletionMessageParam[]): Promise<Draft> {
   let lastError = "";
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await llm().chat.completions.create({

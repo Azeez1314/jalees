@@ -4,6 +4,7 @@
 import { config } from "dotenv";
 import { lessons } from "@/content/lessons";
 import { scenarios } from "@/content/scenarios";
+import { speakingScenarios } from "@/content/speaking";
 import { sql } from "@/lib/db";
 
 config({ path: ".env.local" });
@@ -32,7 +33,17 @@ async function main() {
             opening_line = EXCLUDED.opening_line, target_structures = EXCLUDED.target_structures`;
   }
 
-  console.log(`Seeded ${lessons.length} lessons and ${scenarios.length} scenarios.`);
+  // Speaking-track scenarios have no lesson (lesson_id NULL); sessions still reference them by id.
+  for (const s of speakingScenarios) {
+    await db`
+      INSERT INTO scenarios (id, lesson_id, title, goal, opening_line, target_structures)
+      VALUES (${s.id}, NULL, ${s.title}, ${s.goal}, ${s.openingLine}, ${JSON.stringify(s.targetStructures)}::jsonb)
+      ON CONFLICT (id) DO UPDATE
+        SET title = EXCLUDED.title, goal = EXCLUDED.goal, opening_line = EXCLUDED.opening_line,
+            target_structures = EXCLUDED.target_structures`;
+  }
+
+  console.log(`Seeded ${lessons.length} lessons, ${scenarios.length} ladder scenarios and ${speakingScenarios.length} speaking scenarios.`);
 }
 
 main().catch((err) => {

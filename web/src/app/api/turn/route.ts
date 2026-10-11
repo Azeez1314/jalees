@@ -1,16 +1,19 @@
-import { scenarios } from "@/content/scenarios";
+import { findScenario } from "@/content/speaking";
 import { getUser } from "@/lib/auth/server";
 import { paywall } from "@/lib/guard";
 import { pickFactsForSession } from "@/lib/memory";
 import { getPromptMistakes } from "@/lib/mistake-bank";
 import { getSession, getTurns, saveExchange, type VoiceInput } from "@/lib/queries";
 import { BUDDY_SPEAKS_MEMORY, FACTS_PER_SESSION } from "@/lib/facts";
+import { generateSpeakingTurn } from "@/lib/speaking-turn";
 import { generateBuddyTurn } from "@/lib/turn";
 
 // A turn is up to three model calls (draft, rewrite, plus retries); Vercel's default function limit is shorter than that.
 export const maxDuration = 30;
 
 const MAX_LEARNER_CHARS = 300;
+/** The speaking track expects longer answers. */
+const MAX_SPEAKING_CHARS = 700;
 /** Cost guard until the daily voice-minute cap lands in Phase 2. */
 const MAX_LEARNER_TURNS_PER_SESSION = 40;
 
@@ -27,8 +30,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid JSON" }, { status: 400 });
   }
   const text = typeof body.text === "string" ? body.text.trim() : "";
-  if (!text || text.length > MAX_LEARNER_CHARS || typeof body.sessionId !== "string") {
-    return Response.json({ error: `Send a message of 1-${MAX_LEARNER_CHARS} characters.` }, { status: 400 });
+  if (!text || text.length > MAX_SPEAKING_CHARS || typeof body.sessionId !== "string") {
+    return Response.json({ error: `Send a message of 1-${MAX_SPEAKING_CHARS} characters.` }, { status: 400 });
   }
 
   // Optional: the message was dictated. Keep what the recogniser heard next to what the learner confirmed.
@@ -42,8 +45,12 @@ export async function POST(request: Request) {
 
   const session = await getSession(user.id, body.sessionId);
   if (!session) return Response.json({ error: "Session not found" }, { status: 404 });
-  const scenario = scenarios.find((s) => s.id === session.scenarioId);
+  const scenario = findScenario(session.scenarioId);
   if (!scenario) return Response.json({ error: "Scenario no longer exists" }, { status: 410 });
+  const speaking = scenario.track === "speaking";
+  if (!speaking && text.length > MAX_LEARNER_CHARS) {
+    return Response.json({ error: `Send a message of 1-${MAX_LEARNER_CHARS} characters.` }, { status: 400 });
+  }
 
   const turns = await getTurns(session.id);
   if (turns.filter((t) => t.role === "learner").length >= MAX_LEARNER_TURNS_PER_SESSION) {
@@ -51,16 +58,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const buddy = await generateBuddyTurn({
-      scenario,
-      history: turns.map((t) => ({
-        role: t.role,
-        text: t.role === "buddy" ? t.textDiacritized : (t.transcriptRaw ?? t.textDisplay),
-      })),
-      learnerText: text,
-      recentMistakes: await getPromptMistakes(user.id),
-      memoryFacts: BUDDY_SPEAKS_MEMORY ? await pickFactsForSession(user.id, session.id, FACTS_PER_SESSION) : [],
-    });
+    const history = turns.map((t) => ({
+      role: t.role,
+      text: t.role === "buddy" ? t.textDiacritized : (t.transcriptRaw ?? t.textDisplay),
+    }));
+    const buddy = speaking
+      ? await generateSpeakingTurn({ scenario, history, learnerText: text })
+      : await generateBuddyTurn({
+          scenario,
+          history,
+          learnerText: text,
+          recentMistakes: await getPromptMistakes(user.id),
+          memoryFacts: BUDDY_SPEAKS_MEMORY ? await pickFactsForSession(user.id, session.id, FACTS_PER_SESSION) : [],
+        });
     const buddyTurnId = await saveExchange(user.id, session.id, text, voice, buddy);
 
     return Response.json({
