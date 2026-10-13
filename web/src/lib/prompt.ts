@@ -25,7 +25,8 @@ export function buildBuddySystemPrompt(
   recentMistakes: PastMistake[] = [],
   memoryFacts: string[] = []
 ): string {
-  const vocab = [...cumulativeVocab(lessonNo)].filter((w) => !w.startsWith("@")).join("، ");
+  const allowedVocab = cumulativeVocab(lessonNo);
+  const vocab = [...allowedVocab].filter((w) => !w.startsWith("@")).join("، ");
   const grammar = cumulativeGrammar(lessonNo)
     .map((g) => `- ${g}`)
     .join("\n");
@@ -38,7 +39,7 @@ HARD CONSTRAINT: the learner has only studied through ${describePosition(lessonN
 
 ${verbSection(lessonNo)}
 
-YES/NO QUESTIONS: this course forms them by putting the interrogative أَ in front of the first word (for example أَهَذَا بَيْتٌ؟). Never use هَلْ.
+${yesNoRule(allowedVocab)}
 
 ALLOWED VOCABULARY (cumulative through ${describePosition(lessonNo)}):
 ${vocab}
@@ -121,11 +122,13 @@ function forbiddenVerbExamples(allowed: Set<string>): string {
 }
 
 const PERSON_LABEL: Record<Person, string> = {
+  act: "doer (كاتب)", pass: "done-to (مكتوب)",
   "3ms": "he", "3fs": "she", "3md": "they two (m.)", "3fd": "they two (f.)", "3mp": "they (m.)", "3fp": "they (f.)",
   "2ms": "you (m.)", "2fs": "you (f.)", "2d": "you two", "2mp": "you (m. pl.)", "2fp": "you (f. pl.)", "1s": "I", "1p": "we",
 };
 const TENSE_LABEL: Record<Tense, string> = {
   past: "past", pres: "present", subj: "subjunctive (after أَنْ / لَنْ)", juss: "jussive (after لَمْ)", imp: "command",
+  ppast: "passive past", ppres: "passive present", psubj: "passive subjunctive", pjuss: "passive jussive", ptcp: "participle",
 };
 
 /** "past: he, she, I, we · present: he, I" — the conjugations the learner has been taught, grouped by tense. */
@@ -168,4 +171,11 @@ Example of the mistake to avoid:
     );
   }
   return `VERBS: you may use ONLY the following. ${parts.join(" ")} Do not change the person, number or tense of anything (${forbiddenVerbExamples(allowedForms)}), and do not use ANY other verb, even a polite or common one: أُرِيدُ, أَعْطِنِي, تَفَضَّلْ, آخُذُ, يُمْكِنُ, أَسْتَطِيعُ. A "verb" is any word that changes form depending on who does the action. Before you finalize your reply, reread it: if a word like that is not allowed above, delete that sentence and say it as a plain noun sentence or a short question with the allowed words instead. It is fine to leave a request unanswered if answering would need a forbidden verb.`;
+}
+
+/** How yes/no questions are formed: the book teaches أ first (Book 1) and هل later (Book 3, lesson 2). */
+function yesNoRule(allowed: Set<string>): string {
+  return allowed.has(normalizeArabic("هَلْ"))
+    ? "YES/NO QUESTIONS: use the interrogative أَ on the first word (أَهَذَا بَيْتٌ؟) or هَلْ (هَلْ هَذَا بَيْتٌ؟) — both are taught."
+    : "YES/NO QUESTIONS: this course forms them by putting the interrogative أَ in front of the first word (for example أَهَذَا بَيْتٌ؟). Never use هَلْ.";
 }

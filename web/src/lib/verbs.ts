@@ -11,14 +11,15 @@ import type { Person, Tense, VerbEntry, VerbSlot } from "@/content/types";
  */
 
 export const PERSONS: Person[] = ["3ms", "3fs", "3md", "3fd", "3mp", "3fp", "2ms", "2fs", "2d", "2mp", "2fp", "1s", "1p"];
-export const TENSES: Tense[] = ["past", "pres", "subj", "juss", "imp"];
+export const TENSES: Tense[] = ["past", "pres", "subj", "juss", "imp", "ppast", "ppres", "psubj", "pjuss", "ptcp"];
+const PARTICIPLE_KINDS: Person[] = ["act", "pass"];
 
 const IMPERATIVE_PERSONS: Person[] = ["2ms", "2fs", "2d", "2mp", "2fp"];
 /** Persons whose present ends in ـان / ـون / ـين (the "five verbs": they keep ن in the indicative and drop it otherwise). */
 const NUN_SUFFIX: Partial<Record<Person, string>> = { "3md": "ان", "3fd": "ان", "2d": "ان", "3mp": "ون", "2mp": "ون", "2fs": "ين" };
 const DROPPED: Partial<Record<Person, string>> = { "3md": "ا", "3fd": "ا", "2d": "ا", "3mp": "وا", "2mp": "وا", "2fs": "ي" };
 
-const PRESENT_PREFIX: Record<Person, string> = {
+const PRESENT_PREFIX: Partial<Record<Person, string>> = {
   "3ms": "ي", "3fs": "ت", "3md": "ي", "3fd": "ت", "3mp": "ي", "3fp": "ي", "2ms": "ت", "2fs": "ت", "2d": "ت", "2mp": "ت", "2fp": "ت", "1s": "ا", "1p": "ن",
 };
 
@@ -46,7 +47,7 @@ function attach(stem: string, suffix: string): string {
   return (first === "ت" || first === "ن") && stem.endsWith(first) ? stem + suffix.slice(1) : stem + suffix;
 }
 
-function pastForm(v: VerbEntry, person: Person): string[] {
+function pastForm(v: VerbEntry, person: Person, passive = false): string[] {
   const { r1, r2, r3 } = radicals(v);
   const iv = v.form === 4 ? "ا" : "";
   const f8 = v.form === 8;
@@ -63,7 +64,8 @@ function pastForm(v: VerbEntry, person: Person): string[] {
     }
     case "hollow": {
       // قال: long stem (قال) before vowels and تا/ت of "she"; short stem (قل) before the subject consonants ت تم تن تما ن نا.
-      out = pastWith(r1 + "ا" + r3, r1 + r3, person);
+      // The passive has ي as its long vowel for every hollow verb: قِيلَ، بِيعَ، خِيفَ (and the short stem is unchanged).
+      out = pastWith(r1 + (passive ? "ي" : "ا") + r3, r1 + r3, person);
       break;
     }
     case "doubled": {
@@ -72,7 +74,8 @@ function pastForm(v: VerbEntry, person: Person): string[] {
       break;
     }
     case "defective": {
-      out = pastDefective(base, v, person);
+      // Passive: دُعِيَ، بُنِيَ، رُمِيَ — the ending is always ي, i.e. the same table as a kasra-past verb (نَسِيَ).
+      out = pastDefective(base, passive ? { ...v, kasraPast: true } : v, person);
       break;
     }
   }
@@ -95,6 +98,7 @@ function pastWith(long: string, short: string, person: Person): string {
     case "2mp": return attach(short, "تم");
     case "2fp": return attach(short, "تن");
     case "1p": return attach(short, "نا");
+    default: return "";
   }
 }
 
@@ -114,6 +118,7 @@ function pastDefective(base: string, v: VerbEntry, person: Person): string {
     case "2mp": return base + (waw ? "وتم" : "يتم");
     case "2fp": return base + (waw ? "وتن" : "يتن");
     case "1p": return base + (waw ? "ونا" : "ينا");
+    default: return "";
   }
 }
 
@@ -121,9 +126,10 @@ function pastDefective(base: string, v: VerbEntry, person: Person): string {
 
 type Mood = "pres" | "subj" | "juss";
 
-function presentForm(v: VerbEntry, person: Person, mood: Mood): string[] {
+function presentForm(v: VerbEntry, person: Person, mood: Mood, passive = false): string[] {
   const { r1, r2, r3 } = radicals(v);
   const pre = PRESENT_PREFIX[person];
+  if (pre === undefined) return []; // participle "persons" have no present form
   const nunSuffix = NUN_SUFFIX[person];
   const femininePlural = person === "3fp" || person === "2fp";
   const ending = femininePlural ? "ن" : nunSuffix ? (mood === "pres" ? nunSuffix : DROPPED[person]!) : "";
@@ -135,14 +141,21 @@ function presentForm(v: VerbEntry, person: Person, mood: Mood): string[] {
   const forms: string[] = [];
   switch (v.cls) {
     case "sound":
+      if (passive && r1 === "ا" && !f8) {
+        // Hamza-initial passive: يُؤْخَذُ، أُؤْخَذُ — the hamza sits on a waw (normalized: يوخذ، اوخذ).
+        forms.push(attach(pre + "و" + r2 + r3, ending));
+        break;
+      }
       // Hamza-initial verbs merge their hamza with the I-prefix: أكل → آكل (normalized: اكل).
       forms.push(attach(pre + (person === "1s" && r1 === "ا" && !f8 ? r2 + r3 : r1 + t + r2 + r3), ending));
       break;
     case "assimilated":
-      forms.push(attach(pre + (v.keepsWaw ? r1 : "") + r2 + r3, ending));
+      // The waw drops in the active present (يَصِلُ) but is kept in the passive (يُوصَلُ).
+      forms.push(attach(pre + (v.keepsWaw || passive ? r1 : "") + r2 + r3, ending));
       break;
     case "hollow": {
-      const mid = v.form === 4 ? "ي" : (v.weak ?? "و");
+      // The passive always has a long ā: يُقالُ، يُباعُ، يُخافُ.
+      const mid = passive ? "ا" : v.form === 4 ? "ي" : (v.weak ?? "و");
       if (femininePlural || bareJussive) forms.push(attach(pre + r1 + r3, ending)); // يقلن، لم يقل
       else forms.push(attach(pre + r1 + mid + r3, ending));
       break;
@@ -154,7 +167,8 @@ function presentForm(v: VerbEntry, person: Person, mood: Mood): string[] {
       break;
     }
     case "defective": {
-      const weak = v.weak === "و" ? "و" : "ي";
+      // The passive ending is always ى / ي: يُدْعَى (not يدعو)، يُبْنَى، يُرْمَى.
+      const weak = !passive && v.weak === "و" ? "و" : "ي";
       // Hamza-initial defective verbs merge the hamza with the I-prefix in the 1st person: أتى → آتي (normalized: اتي).
       const base = person === "1s" && r1 === "ا" && !f8 ? r2 : r1 + t + r2;
       if (bareJussive) forms.push(pre + base); // لم يدع، لم يرم
@@ -192,6 +206,40 @@ function imperativeForm(v: VerbEntry, person: Person): string[] {
   }
 }
 
+// ---- participles ------------------------------------------------------------------------------------------------------------
+
+/** The active (كاتِب) and passive (مَكْتُوب) participle, normalized. Form I, IV and VIII; the feminine and plural use the plain suffixes. */
+function participleForms(v: VerbEntry, kind: Person): string[] {
+  const { r1, r2, r3 } = radicals(v);
+  const form = v.form ?? 1;
+
+  if (form === 4 || form === 8) {
+    // مُفْعِل / مُفْتَعِل: the same letters for the active and the passive once vowels are dropped.
+    const t = form === 8 ? "ت" : "";
+    const first = form === 8 ? r1 + t + r2 : r1 + r2;
+    switch (v.cls) {
+      case "hollow": return ["م" + r1 + (kind === "act" ? "ي" : v.weak === "ي" ? "ي" : "و") + r3]; // مُرِيد / مُرَاد → مريد، مراد
+      case "doubled": return ["م" + r1 + r2];
+      case "defective": return ["م" + first, "م" + first + "ي"]; // مُعْطٍ، مُشْتَرٍ
+      default: return ["م" + first + r3];
+    }
+  }
+
+  if (kind === "act") {
+    switch (v.cls) {
+      case "hollow": return [r1 + "اي" + r3]; // قائل، بائع (the hamza is written on a yaa': normalized ئ → ي)
+      case "doubled": return [r1 + "ا" + r2]; // حاجّ، سارّ
+      case "defective": return [r1 + "ا" + r2, r1 + "ا" + r2 + "ي"]; // داعٍ / الداعي، رامٍ / الرامي
+      default: return [r1 === "ا" ? "ا" + r2 + r3 : r1 + "ا" + r2 + r3]; // كاتب، واصل، آخذ
+    }
+  }
+  switch (v.cls) {
+    case "hollow": return ["م" + r1 + (v.weak === "ي" ? "ي" : "و") + r3]; // مقول، مبيع، مخوف
+    case "defective": return ["م" + r1 + r2 + (v.weak === "و" ? "و" : "ي")]; // مدعو، مبني
+    default: return ["م" + r1 + r2 + "و" + r3]; // مكتوب، مسروق، موزون، مسرور، مأخوذ
+  }
+}
+
 // ---- public API -------------------------------------------------------------------------------------------------------------
 
 /** All normalized forms of `verb` for one slot (empty for impossible slots such as an imperative for the 3rd person). */
@@ -205,22 +253,33 @@ export function generateForms(verb: VerbEntry, slot: VerbSlot): string[] {
     case "subj":
     case "juss": return uniq(presentForm(verb, person, tense));
     case "imp": return uniq(imperativeForm(verb, person));
+    case "ppast": return uniq(pastForm(verb, person, true));
+    case "ppres": return uniq(presentForm(verb, person, "pres", true));
+    case "psubj": return uniq(presentForm(verb, person, "subj", true));
+    case "pjuss": return uniq(presentForm(verb, person, "juss", true));
+    case "ptcp": return uniq(participleForms(verb, person));
   }
 }
 
 /** Every slot that exists in the language (the imperative only has 2nd-person slots). */
 export const ALL_SLOTS: VerbSlot[] = TENSES.flatMap((t) =>
-  (t === "imp" ? IMPERATIVE_PERSONS : PERSONS).map((p) => `${t}:${p}` as VerbSlot)
+  (t === "imp" ? IMPERATIVE_PERSONS : t === "ptcp" ? PARTICIPLE_KINDS : PERSONS).map((p) => `${t}:${p}` as VerbSlot)
 );
 
-/** Expands slot patterns like "past:*" or "*:3ms" into concrete slots. */
+const PASSIVE_TENSES = new Set<string>(["ppast", "ppres", "psubj", "pjuss"]);
+
+/**
+ * Expands slot patterns into concrete slots: "past:*" (every person), "*:3ms" (every ACTIVE tense), "p*:3ms" (every passive
+ * tense), "ptcp:*" (both participles).
+ */
 export function expandSlots(patterns: string[]): VerbSlot[] {
   const out = new Set<VerbSlot>();
   for (const pat of patterns) {
     const [t, p] = pat.split(":");
     for (const slot of ALL_SLOTS) {
       const [st, sp] = slot.split(":");
-      if ((t === "*" || t === st) && (p === "*" || p === sp)) out.add(slot);
+      const tenseOk = t === st || (t === "*" && !PASSIVE_TENSES.has(st) && st !== "ptcp") || (t === "p*" && PASSIVE_TENSES.has(st));
+      if (tenseOk && (p === "*" || p === sp)) out.add(slot);
     }
   }
   return [...out];

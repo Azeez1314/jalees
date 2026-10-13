@@ -110,6 +110,39 @@ paradigm("hamza-initial defective (أتى)", ataa, {
   "pres:2fs": "تاتين", "juss:3ms": "يات", "imp:2ms": "ائت",
 });
 
+// ---- passive voice ------------------------------------------------------------------------------------------------------------
+// Without diacritics a sound verb's passive is spelled like its active; the weak classes are where they differ.
+paradigm("passive sound past (كُتِبَ)", dhahaba, P("ppast", "ذهب, ذهبت, ذهبا, ذهبتا, ذهبوا, ذهبن, ذهبت, ذهبت, ذهبتما, ذهبتم, ذهبتن, ذهبت, ذهبنا"));
+paradigm("passive sound present", dhahaba, P("ppres", "يذهب, تذهب, يذهبان, تذهبان, يذهبون, يذهبن, تذهب, تذهبين, تذهبان, تذهبون, تذهبن, اذهب, نذهب"));
+paradigm("passive hollow past (قِيلَ)", qala, P("ppast", "قيل, قيلت, قيلا, قيلتا, قيلوا, قلن, قلت, قلت, قلتما, قلتم, قلتن, قلت, قلنا"));
+paradigm("passive hollow present (يُقَالُ)", qala, P("ppres", "يقال, تقال, يقالان, تقالان, يقالون, يقلن, تقال, تقالين, تقالان, تقالون, تقلن, اقال, نقال"));
+paradigm("passive hollow jussive", qala, { "pjuss:3ms": "يقل", "pjuss:3mp": "يقالوا", "psubj:3ms": "يقال" });
+paradigm("passive hollow ي (بِيعَ، يُبَاعُ)", baa3a, { "ppast:3ms": "بيع", "ppast:3fs": "بيعت", "ppast:1s": "بعت", "ppres:3ms": "يباع", "ppres:3fp": "يبعن" });
+paradigm("passive hollow ا (خِيفَ، يُخَافُ)", khaafa, { "ppast:3ms": "خيف", "ppast:3mp": "خيفوا", "ppres:3ms": "يخاف", "ppres:2fs": "تخافين" });
+paradigm("passive defective past (دُعِيَ)", da3a, P("ppast", "دعي, دعيت, دعيا, دعيتا, دعوا, دعين, دعيت, دعيت, دعيتما, دعيتم, دعيتن, دعيت, دعينا"));
+paradigm("passive defective present (يُدْعَى)", da3a, P("ppres", "يدعي, تدعي, يدعيان, تدعيان, يدعون, يدعين, تدعي, تدعين, تدعيان, تدعون, تدعين, ادعي, ندعي"));
+paradigm("passive defective jussive (لم يُدْعَ)", da3a, { "pjuss:3ms": "يدع", "pjuss:3mp": "يدعوا", "pjuss:2fs": "تدعي", "psubj:3ms": "يدعي" });
+paradigm("passive of رمى (رُمِيَ، يُرْمَى)", rama, { "ppast:3ms": "رمي", "ppast:1s": "رميت", "ppres:3ms": "يرمي", "ppres:3fp": "يرمين" });
+paradigm("passive assimilated keeps the waw (وُجِدَ، يُوجَدُ)", wasala, { "ppast:3ms": "وصل", "ppres:3ms": "يوصل", "ppres:1s": "اوصل", "ppres:3mp": "يوصلون" });
+paradigm("passive doubled (رُدَّ، يُرَدُّ)", madda, { "ppast:3ms": "مد", "ppast:1s": "مددت", "ppres:3ms": "يمد", "pjuss:3ms": "يمد يمدد", "ppres:3fp": "يمددن" });
+paradigm("passive hamza-initial (أُخِذَ، يُؤْخَذُ)", { root: "أخذ", lemma: "أَخَذَ", gloss: "take", cls: "sound" }, { "ppast:3ms": "اخذ", "ppres:3ms": "يوخذ", "ppres:1s": "اوخذ", "ppres:3mp": "يوخذون", "ppres:2fs": "توخذين" });
+paradigm("passive of Form IV (أُحِبَّ)، hollow IV (أُرِيدَ)", { root: "رود", lemma: "أَرَادَ", gloss: "want", cls: "hollow", form: 4 }, { "ppast:3ms": "ارید".replace("ی", "ي"), "ppast:1s": "اردت", "ppres:3ms": "يراد" });
+paradigm("passive of Form VIII defective (اشْتُرِيَ)", ishtara, { "ppast:3ms": "اشتري", "ppast:3mp": "اشتروا", "ppres:3ms": "يشتري", "ppres:3mp": "يشترون" });
+
+// ---- participles ------------------------------------------------------------------------------------------------------------------
+const part = (name: string, verb: VerbEntry, act: string, pass: string) =>
+  paradigm(name, verb, { "ptcp:act": act, "ptcp:pass": pass });
+part("participles: sound (كاتِب / مَكْتُوب)", { root: "كتب", lemma: "كَتَبَ", gloss: "write", cls: "sound" }, "كاتب", "مكتوب");
+part("participles: assimilated (وَاصِل / مَوْصُول)", wasala, "واصل", "موصول");
+part("participles: hollow و (قَائِل / مَقُول)", qala, "قايل", "مقول");
+part("participles: hollow ي (بَائِع / مَبِيع)", baa3a, "بايع", "مبيع");
+part("participles: defective و (دَاعٍ / مَدْعُوّ)", da3a, "داع داعي", "مدعو");
+part("participles: defective ي (رَامٍ / مَرْمِيّ)", rama, "رام رامي", "مرمي");
+part("participles: doubled (حَاجّ / مَحْجُوج)", { root: "حجج", lemma: "حَجَّ", gloss: "x", cls: "doubled" }, "حاج", "محجوج");
+part("participles: hamza-initial (آخِذ / مَأْخُوذ)", { root: "أخذ", lemma: "أَخَذَ", gloss: "take", cls: "sound" }, "اخذ", "ماخوذ");
+part("participles: Form IV (مُرْسِل / مُرْسَل)", arsala, "مرسل", "مرسل");
+part("participles: Form VIII (مُجْتَهِد)", ishtamala, "مجتمع", "مجتمع");
+
 // ---- doubled ت / ن at the suffix (written with a shadda) ----------------------------------------------------------------------
 const kaana: VerbEntry = { root: "كون", lemma: "كَانَ", gloss: "be", cls: "hollow", weak: "و" };
 paradigm("kaana: كنّا / كنّ", kaana, { "past:3ms": "كان", "past:3fs": "كانت", "past:1p": "كنا", "past:3fp": "كن", "past:1s": "كنت", "past:2mp": "كنتم", "pres:3ms": "يكون", "pres:3fp": "يكن", "juss:3ms": "يكن", "imp:2ms": "كن" });
@@ -119,9 +152,11 @@ const sakana: VerbEntry = { root: "سكن", lemma: "سَكَنَ", gloss: "live"
 paradigm("sakana: سكنّ / سكنّا", sakana, { "past:3fp": "سكن", "past:1p": "سكنا", "pres:3fp": "يسكن", "pres:2fp": "تسكن" });
 
 // ---- slots ------------------------------------------------------------------------------------------------------------------
-check(ALL_SLOTS.length === 13 * 4 + 5, "13 persons × 4 tenses + 5 imperatives = 57 slots", String(ALL_SLOTS.length));
+check(ALL_SLOTS.length === 13 * 4 + 5 + 13 * 4 + 2, "57 active + 52 passive + 2 participle slots = 111", String(ALL_SLOTS.length));
 check(expandSlots(["past:*"]).length === 13, "past:* expands to 13 slots");
-check(expandSlots(["*:3ms"]).length === 4, "*:3ms = past, present, subjunctive, jussive");
+check(expandSlots(["*:3ms"]).length === 4, "*:3ms = the four ACTIVE tenses (passive is asked for explicitly)");
+check(expandSlots(["p*:3ms"]).length === 4 && expandSlots(["ppast:*"]).length === 13, "p*:3ms = the four passive tenses; ppast:* = 13 persons");
+check(expandSlots(["ptcp:*"]).length === 2, "ptcp:* = the active and passive participle");
 check(expandSlots(["imp:*", "past:3ms"]).length === 6, "patterns combine");
 
 if (failed) {

@@ -1,4 +1,4 @@
-import { generatedMarker, normalizeArabic, objectMarker, prefixMarker, suffixMarker, verbMarker } from "@/content/lessons";
+import { generatedMarker, generatedNounMarker, normalizeArabic, objectMarker, prefixMarker, suffixMarker, verbMarker } from "@/content/lessons";
 import type { VocabViolation } from "@/content/types";
 
 // Arabic letters + tatweel + tashkeel + superscript alef + Quranic annotation marks —
@@ -51,26 +51,33 @@ function candidateForms(token: string, prefixes: string[], suffixes: string[]): 
       }
     }
   }
-  const withoutPrefix = [...forms];
-  for (const base of withoutPrefix) {
-    for (const s of suffixes) {
-      if (base.endsWith(s) && base.length > s.length + 1) for (const v of baseVariants(base.slice(0, base.length - s.length), s)) forms.add(v);
+  // Suffixes may stack (أخواك = أخو + ا + ك), so strip in two passes as well.
+  for (let pass = 0; pass < 2; pass++) {
+    for (const base of [...forms]) {
+      for (const s of suffixes) {
+        if (base.endsWith(s) && base.length > s.length + 1) for (const v of baseVariants(base.slice(0, base.length - s.length), s)) forms.add(v);
+      }
     }
   }
   return [...forms];
 }
 
 /**
- * An allowed verb form, exactly — optionally with a fused "و", or after the yes/no أَ (أَذَهَبْتُمْ؟). The أ case is accepted only
- * when what follows is clearly a past-tense ending (ـت ـتم ـنا ـوا ـن): a bare أذهب is ambiguous with "I go" (present), which is not taught.
+ * An allowed verb form, exactly — optionally with a fused "و", or after the yes/no أَ (أَذَهَبْتُمْ؟ أَتَسْتَطِيعُ؟). The أ case is accepted
+ * only when what follows is clearly a verb form — a past-tense ending (ـت ـتم ـنا ـوا ـن) or a present prefix (ي ت ن): a bare أذهب is
+ * ambiguous with "I go" (present), which is only taught when that form is listed.
  */
 function verbMatches(norm: string, allowed: Set<string>): boolean {
   const has = (w: string) => allowed.has(verbMarker(w));
   if (has(norm)) return true;
   if (norm.startsWith("و") && norm.length > 2 && verbMatches(norm.slice(1), allowed)) return true;
+  // لـ (so that / then I would: لَاسْتَقْبَلْتُكَ) and فـ (so / then), once those prefixes have been taught.
+  for (const p of ["ل", "ف"]) {
+    if (norm.startsWith(p) && norm.length > 3 && allowed.has(prefixMarker(p)) && verbMatches(norm.slice(1), allowed)) return true;
+  }
   if (norm.startsWith("ا") && allowed.has(prefixMarker("ا"))) {
     const rest = norm.slice(1);
-    if (rest.length > 3 && /(?:ت|تم|تن|نا|وا|ن)$/.test(rest) && has(rest)) return true;
+    if (rest.length > 3 && (/(?:ت|تم|تن|نا|وا|ن)$/.test(rest) || /^[يتن]/.test(rest)) && has(rest)) return true;
   }
   return false;
 }
@@ -98,7 +105,7 @@ function generatedVerbMatches(norm: string, allowed: Set<string>): boolean {
   };
   const withPrefixes = (w: string, depth: number): boolean => {
     if (withObjects(w)) return true;
-    if (depth >= 3 || w.length < 4) return false;
+    if (depth >= 3 || w.length < 3) return false;
     if (w.startsWith("و") && withPrefixes(w.slice(1), depth + 1)) return true;
     if (w.startsWith("س") && allowed.has(prefixMarker("س")) && /^[يتنا]/.test(w.slice(1)) && withPrefixes(w.slice(1), depth + 1)) return true;
     // لـ (in order to: خرجتُ لأشربَ) and فـ (so / then: فسأذهب) before a verb, once those prefixes are taught.
@@ -134,7 +141,9 @@ export function checkVocab(text: string, allowed: Set<string>): VocabViolation[]
     if (norm.length <= 1) continue; // single-letter attached particles already normalized away elsewhere
     // Verbs match exactly (optionally with a fused "و"): their forms are listed one by one, never derived by stripping.
     const isVerb = verbMatches(norm, allowed) || generatedVerbMatches(norm, allowed);
-    const known = isVerb || candidateForms(norm, prefixes, suffixes).some((f) => allowed.has(f));
+    // A generated participle is a noun and takes the same prefixes and suffixes as one (الذاهب، راسبا، كاتبون); a generated verb
+    // form ("@g:") does not — it is matched exactly by `generatedVerbMatches`.
+    const known = isVerb || candidateForms(norm, prefixes, suffixes).some((f) => allowed.has(f) || allowed.has(generatedNounMarker(f)));
     if (!known) {
       violations.push({ token: raw, reason: "not in cumulative allowed vocab (after affix stripping)" });
     }

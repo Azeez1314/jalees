@@ -1,8 +1,12 @@
 /** Verb classes of the triliteral verb (Madinah Book 2 teaches them in this order: sound, then the weak classes). */
 export type VerbClass = "sound" | "assimilated" | "hollow" | "defective" | "doubled";
 
-export type Tense = "past" | "pres" | "subj" | "juss" | "imp";
-export type Person = "3ms" | "3fs" | "3md" | "3fd" | "3mp" | "3fp" | "2ms" | "2fs" | "2d" | "2mp" | "2fp" | "1s" | "1p";
+/**
+ * Conjugation tenses. The "p" tenses are the passive voice (ppast كُتِبَ, ppres يُكْتَبُ, …); "ptcp" is the participle, whose two
+ * "persons" are "act" (كاتِب) and "pass" (مَكْتوب) — the feminine and plural are made with the ordinary suffixes.
+ */
+export type Tense = "past" | "pres" | "subj" | "juss" | "imp" | "ppast" | "ppres" | "psubj" | "pjuss" | "ptcp";
+export type Person = "3ms" | "3fs" | "3md" | "3fd" | "3mp" | "3fp" | "2ms" | "2fs" | "2d" | "2mp" | "2fp" | "1s" | "1p" | "act" | "pass";
 /** A conjugation slot such as "past:3ms" or "pres:2fp". */
 export type VerbSlot = `${Tense}:${Person}`;
 
@@ -55,7 +59,8 @@ export interface Lesson {
   verbs?: VerbEntry[];
   /**
    * Conjugation slots that become usable here, for ALL verbs introduced up to this lesson. Cumulative. Patterns are allowed:
-   * "past:3ms", "past:*" (every person), "*:3ms" (every tense), "imp:*".
+   * "past:3ms", "past:*" (every person), "*:3ms" (every ACTIVE tense), "imp:*", and for the passive "ppast:*" / "p*:3ms"; the
+   * participles are "ptcp:act" and "ptcp:pass".
    */
   verbSlots?: string[];
   /** Word-building particles that become usable here: a prefix like "ل", an attached-pronoun suffix like "ي". */

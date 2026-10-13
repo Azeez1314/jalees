@@ -203,7 +203,7 @@ banner and visible `[PLACEHOLDERS]` (company, contact email, governing law, refu
 `lessons`/`scenarios` tables so sessions can reference scenarios and content can be joined in analytics.
 
 The lesson tables follow **Madinah's own numbering**: Book 1 (all 23 lessons) in `src/content/book1.ts`, Book 2 (all 31 lessons) in
-`src/content/book2.ts`. Each lesson has a book-local `lessonNo` and a global **position** (Book 1 = 1-23, Book 2 lesson n = 23 + n); everything
+`src/content/book2.ts`, Book 3 (lessons 1-15 of 34 so far) in `src/content/book3.ts`. Each lesson has a book-local `lessonNo` and a global **position** (Book 1 = 1-23, Book 2 lesson n = 23 + n, Book 3 lesson n = 54 + n); everything
 cumulative — vocabulary, grammar, verbs, genders, a learner's level, placement — is keyed by position, so nothing written against Book 1 moved. They record which words and
 structures each lesson introduces — word lists and short grammar notes in our own words, never the book's sentences or exercises
 (product spec: align to lesson numbers only). Words the book shows only in drills or appendices count as not taught yet.
@@ -225,6 +225,14 @@ defective, doubled; Form I or IV) and `lib/verbs.ts` generates every conjugation
 `past:3ms`, `pres:*`) for all verbs known so far, and object pronouns on verbs unlock separately (`newAffixes.objects`). Irregular verbs (جاء، رأى،
 the imperatives of أكل / أخذ) carry explicit `overrides`. The generator produces normalized (undiacritized) forms, which is what the checker
 compares; `npm run check:verbs` tests every class against full written-out paradigms.
+
+**Book 3 is taught in Arabic** (classroom dialogue, then grammar explained in grammatical Arabic), and a large part of it is *i'rab* — naming
+the case-role of each word. That is not a conversational skill, so the Book 3 tables record only constructions a learner can *say* (the passive,
+participles, "let him…", conditions, "both", "while…") and the buddy does not drill parsing. Two generator additions came with it: the **passive**
+(`ppast`, `ppres`, `psubj`, `pjuss` — without diacritics a sound verb's passive is spelled like its active, so the weak classes carry the difference)
+and the **participles** (`ptcp:act` كاتب, `ptcp:pass` مكتوب), which are *nouns*: they take ال, the plural and feminine endings and possessives, and
+the checker stores them under a separate marker so verb forms never leak through those noun suffixes. Derived verb forms II-X are Book 3 lessons
+16+ and are not generated yet; the few that appear earlier in dialogue are listed as exact forms.
 
 **Left out on purpose:** the Qur'an, surah names, verses and hadith that Book 2 quotes throughout (lessons 5, 6, 9, 14, 17, 18, 19, 21, 28, 29 and others), and verbs that only appear in religious contexts (حجّ، تلا، هدى، عبد). The buddy never refers to scripture.
 
@@ -254,9 +262,11 @@ It is a deliberately small experiment, not a finished feature: it exists to find
 
 ## Known limitations
 
-- **Content is Books 1 and 2 (54 lessons)** (the spec's target learner is Book 2-3, so Book 3 and the further books are the next content step).
-  The verb engine and multi-book structure are in place; Book 3 adds mainly new patterns (the derived verb forms II-X, the passive, and so on),
-  which `lib/verbs.ts` does not generate yet (it covers Form I, IV and VIII for the regular classes).
+- **Content is Books 1-2 (54 lessons) and Book 3 lessons 1-15 (of 34)**. Book 3 lessons 16-34 are mostly the derived verb forms II-X
+  (the generator covers Forms I, IV and VIII today), then the finer points of syntax; they are the next content step.
+- **The buddy's prompt is large** (~27k tokens by Book 3 lesson 15, because it lists every allowed word). It works on a 128k-token model and OpenAI
+  caches the repeated prefix, but it will not scale to Book 5: the plan is to list only the recent lessons' words in full and rely on the code-side
+  check for the rest.
 - **The vocabulary checker is a heuristic.** Without diacritics some forms collide (اجلس "sit!" / أجلس "I sit"; نمت "I slept" / "we did not die"),
   verb forms of different persons can share a spelling, and the yes/no أ is stripped from any word. Treat flagged and unflagged replies as signals,
   not proof. On ordinary learner input about 2% of buddy turns still contain an out-of-lesson word after the guard; on deliberately tempting input
@@ -267,7 +277,7 @@ It is a deliberately small experiment, not a finished feature: it exists to find
 - **Neon Auth is beta** and its self-deletion path is unverified (see *Your data*). The Stripe webhook needs a public URL outside local testing.
 - **OpenAI limits**: the key reaches only `gpt-4o-mini`, `gpt-4o-mini-transcribe` and `gpt-4o-mini-tts`, with a 200,000 tokens/minute cap.
   Each turn is 1-3 model calls; raise the limit before real traffic.
-- **Placement** is translation-prompt based, order-insensitive and covers lessons 1-54 with an item for most lessons (the test **skips ahead** while a learner keeps passing, so a perfect score is about 15 questions, not 56, and a miss starts them one past the highest lesson they passed); a spoken free-conversation placement would need a model judge.
+- **Placement** is translation-prompt based, order-insensitive and covers lessons 1-69 with an item for every lesson (the test **skips ahead** while a learner keeps passing, so a perfect score is about 15 questions, not 56, and a miss starts them one past the highest lesson they passed); a spoken free-conversation placement would need a model judge.
 
 - **Recasts are only guaranteed for demonstrative–noun gender** (the commonest beginner error), which the app checks
   itself: 30/30 deliberate errors were recast and 0/20 correct sentences were wrongly flagged against the live model.

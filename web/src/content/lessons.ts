@@ -2,6 +2,7 @@ import { normalizeArabic } from "@/lib/arabic";
 import { generateForms, expandSlots } from "@/lib/verbs";
 import { book1Lessons } from "./book1";
 import { book2Lessons } from "./book2";
+import { book3Lessons } from "./book3";
 import type { Lesson, VerbEntry, VerbSlot } from "./types";
 
 export { normalizeArabic };
@@ -16,7 +17,7 @@ export interface PlacedLesson extends Lesson {
   position: number;
 }
 
-const authored: Lesson[] = [...book1Lessons, ...book2Lessons].sort((a, b) => a.book - b.book || a.lessonNo - b.lessonNo);
+const authored: Lesson[] = [...book1Lessons, ...book2Lessons, ...book3Lessons].sort((a, b) => a.book - b.book || a.lessonNo - b.lessonNo);
 export const lessons: PlacedLesson[] = authored.map((l, i) => ({ ...l, position: i + 1 }));
 
 /** The global position of Book `book`, lesson `lessonNo`. Throws for lessons that are not authored (typos in content fail loudly). */
@@ -71,6 +72,7 @@ const feminine = (adjective: string) => normalizeArabic(adjective) + "ه";
  *  - "@p:ل" / "@s:ي" switch a prefix / suffix on.
  *  - "@v:ذهب" is a hand-listed verb form (Book 1): it matches that exact spelling only, so أَذْهَبُ "I go" or اذْهَبْ "go!" can't
  *    sneak in as أ + ذهب.
+ *  - "@n:كاتب" is a participle generated the same way; it is a noun, so it takes ال, the plural, the feminine and possessives.
  *  - "@g:يذهبون" is a form GENERATED from a verb's root and class for a slot the learner has been taught (see lib/verbs.ts).
  *    Unlike "@v:" it may carry an object pronoun (يحبونه), the future سـ, or a yes/no أ — `checkVocab` handles those.
  */
@@ -78,6 +80,8 @@ export const prefixMarker = (p: string) => `@p:${p}`;
 export const suffixMarker = (s: string) => `@s:${s}`;
 export const verbMarker = (v: string) => `@v:${normalizeArabic(v)}`;
 export const generatedMarker = (form: string) => `@g:${normalizeArabic(form)}`;
+/** "@n:كاتب" is a generated NOUN (a participle): unlike a verb form it takes the, possessives, plural and feminine endings. */
+export const generatedNounMarker = (form: string) => `@n:${normalizeArabic(form)}`;
 export const objectMarker = (o: string) => `@o:${o}`;
 
 const verbsThrough = (upto: number): VerbEntry[] => lessons.filter((l) => l.position <= upto).flatMap((l) => l.verbs ?? []);
@@ -114,7 +118,10 @@ export function cumulativeVocab(uptoLesson: number): Set<string> {
   // Verbs taught as root + class: every unlocked slot of every verb known so far.
   const slots = unlockedSlots(uptoLesson);
   for (const verb of verbsThrough(uptoLesson)) {
-    for (const slot of slots) for (const form of generateForms(verb, slot)) set.add(generatedMarker(form));
+    for (const slot of slots) {
+      const marker = slot.startsWith("ptcp:") ? generatedNounMarker : generatedMarker;
+      for (const form of generateForms(verb, slot)) set.add(marker(form));
+    }
   }
   for (const w of alwaysAllowed) set.add(normalizeArabic(w));
   vocabCache.set(uptoLesson, set);

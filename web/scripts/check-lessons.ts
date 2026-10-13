@@ -199,9 +199,40 @@ no("غَدًا", B2(9), "غدا before lesson 10");
 check(buildBuddySystemPrompt(B2(14), "g").includes("command"), "the prompt describes the commands once they are taught");
 check(!buildBuddySystemPrompt(B2(30), "g").includes("@"), "no markers leak into the lesson-30 prompt");
 
+
+// ---- Book 3 lessons 1-15 -----------------------------------------------------------------------------------------------------
+const B3 = (n: number) => positionOf(3, n);
+check(B3(1) === 55 && describePosition(B3(3)) === "Book 3, Lesson 3", "Book 3 positions follow Book 2 (lesson 1 = position 55)");
+no("هَلْ مِنْ سُؤَالٍ؟", B2(31), "هل (the book teaches it in Book 3, lesson 2)");
+ok("هَلْ مِنْ سُؤَالٍ؟ هَلْ هَذَا بَيْتٌ؟", B3(2), "هل and the yes/no أ both");
+check(buildBuddySystemPrompt(B3(1), "g").includes("Never use هَلْ") && buildBuddySystemPrompt(B3(2), "g").includes("or هَلْ"), "the prompt forbids هل until lesson 2, then allows both");
+no("يَسْتَطِيعُ", B3(2), "يستطيع before it appears (lesson 3)");
+ok("يَسْتَطِيعُ. أَتَسْتَطِيعُ؟ أَسْتَطِيعُ", B3(3), "يستطيع, also after the yes/no أ");
+// passive
+no("قِيلَ لِي", B2(31), "the passive قيل before lesson 3 of Book 3");
+ok("قِيلَ لِي. يُبَاعُ. يُدْعَى. بُنِيَ. وُلِدْتُ. سُرِقَ كِتَابِي. تُفْتَحُ الْمَكْتَبَةُ", B3(3), "passive past and present, weak verbs included");
+ok("لَمْ يُفْتَحْ. لَنْ يُقَالَ", B3(3), "passive jussive and subjunctive");
+// participles
+no("هَلْ مِنْ رَاسِبٍ؟", B3(3), "a participle before lesson 4");
+ok("هَلْ مِنْ رَاسِبٍ؟ أَنَا ذَاهِبٌ. مَكْتُوبٌ. الذَّاهِبُونَ. كَاتِبَةٌ. الْمَفْتُوحُ", B3(4), "participles: the, plural and feminine");
+ok("قَائِلٌ. بَائِعٌ. زَائِرٌ. دَاعٍ. الدَّاعِي. مَقُولٌ. مَبْنِيٌّ", B3(4), "participles of weak verbs");
+check(checkVocab("فَتَحْنَا", cumulativeVocab(B2(6))).length > 0, "participle nouns do not let verb forms through the possessive suffixes ('we opened' before lesson 7)");
+// names, months and plural nouns
+ok("فِي شَهْرِ رَجَبٍ. رَمَضَانُ. الْمُحَرَّمُ", B3(3), "the Hijri months");
+no("مَوْقِفٌ", B3(5), "a place noun before lesson 6");
+ok("نَلْتَقِي فِي مَوْقِفِ السَّيَّارَاتِ. أَمُسْتَعِدُّونَ؟", B3(6), "meeting at the car park");
+ok("لِيَجْلِسْ كُلُّ طَالِبٍ. لِنَقْرَأِ الدَّرْسَ", B3(13), "لام الأمر (لـ + the jussive)");
+no("لَوْ دَرَسْتُ لَنَجَحْتُ", B3(11), "لو before lesson 12");
+ok("لَوْ دَرَسْتُ لَنَجَحْتُ. لَاسْتَقْبَلْتُكَ", B3(12), "لو, and لـ before an exact verb");
+ok("إِذَا جَاءَ فَقُلْ لَهُ. إِذَا وَجَدْتَ الْمَرِيضَ نَائِمًا فَلَا تُوقِظْهُ", B3(14), "إذا and فـ before a command");
+no("مَهْمَا تَقُلْ", B3(14), "مهما before lesson 15");
+ok("إِنْ تَدْرُسْ تَنْجَحْ. مَهْمَا تَقُلْ نَسْمَعْ. مَنْ جَاءَ فَلَا يَدْخُلْ حَتَّى يَسْتَأْذِنَ", B3(15), "conditions with the jussive");
+check(!buildBuddySystemPrompt(B3(15), "g").includes("@"), "no markers leak into the lesson-15 prompt");
+check(buildBuddySystemPrompt(B3(4), "g").includes("participle") && buildBuddySystemPrompt(B3(3), "g").includes("passive past"), "the prompt describes the passive (lesson 3) and the participles (lesson 4)");
+
 // ---- gender tables ---------------------------------------------------------------------------------------------
 const key = (w: string) => normalizeArabic(w).replace(/^ال(?=.)/, "");
-for (const upto of [1, 5, 10, 16, 23, 28, 33, 40, 47, 54]) {
+for (const upto of [1, 5, 10, 16, 23, 28, 33, 40, 47, 54, 60, 69]) {
   const g = cumulativeGenders(upto);
   const m = new Set(g.masculine.map(key));
   const f = g.feminine.map(key);
